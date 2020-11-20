@@ -1,16 +1,6 @@
 import * as React from "react";
-import {
-  ChakraProvider,
-  Button,
-  Flex,
-  Text,
-  VStack,
-  theme,
-  Icon,
-} from "@chakra-ui/react";
 import Draggable from "react-draggable";
 import { useEffect, useState } from "react";
-import { DragHandleIcon } from "@chakra-ui/icons";
 
 export const App = () => {
   const [isScrapping, setIsScrapping] = useState(false);
@@ -42,44 +32,27 @@ export const App = () => {
   };
 
   return (
-    <ChakraProvider resetCSS={false}>
-      <Draggable handle=".handle" onDrag={() => setIsGrabbing(true)}>
-        <Flex
-          w="400px"
-          h="700px"
-          pos="absolute"
-          top="0"
-          left="0"
-          zIndex="9999"
-          align="center"
-          justify="center"
-          rounded="md"
-          shadow="lg"
-          flexDirection="column"
-          backgroundColor="gray.900"
-        >
-          <Flex
-            w="full"
-            pos="absolute"
-            justify="center"
-            align="center"
-            top="0"
-            className="handle"
-            cursor={isGrabbing ? "grabbing" : "grab"}
-            height="70px"
-            onMouseDown={() => setIsGrabbing(true)}
-            onMouseUp={() => setIsGrabbing(false)}
-          >
-            <Icon as={DragHandleIcon} />
-          </Flex>
-          <VStack>
-            <Text>{clickedNode}</Text>
-            <Button onClick={launchNodeSelection}>
-              {isScrapping ? "STOP SCRAPPING" : "SCRAP"}
-            </Button>
-          </VStack>
-        </Flex>
-      </Draggable>
-    </ChakraProvider>
+    <Draggable handle=".handle" onDrag={() => setIsGrabbing(true)}>
+      <div
+        className="flex absolute items-center justify-center top-0 left-0 rounded-lg shadow-lg flex-col bg-gray-900ﬁ"
+        style={{ width: "400px", height: "700px", zIndex: 99999 }}
+      >
+        <div
+          className={
+            "w-full absolute justify-center items-center top-0 handle h-10 " +
+            (isGrabbing ? "grabbing" : "grab")
+          }
+          style={{ height: "70px" }}
+          onMouseDown={() => setIsGrabbing(true)}
+          onMouseUp={() => setIsGrabbing(false)}
+        ></div>
+        <div>
+          <p>{clickedNode}</p>
+          <button onClick={launchNodeSelection}>
+            {isScrapping ? "STOP SCRAPPING" : "SCRAP"}
+          </button>
+        </div>
+      </div>
+    </Draggable>
   );
 };
