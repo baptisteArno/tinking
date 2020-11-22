@@ -1,11 +1,16 @@
 /* global chrome */
 /* global tippy */
 
+let finder;
+(async () => {
+  const src = chrome.runtime.getURL("./finder.js");
+  finder = await import(src);
+})();
+
 chrome.runtime.onMessage.addListener(function (event) {
   if (event.message !== "load") {
     return;
   }
-  console.log(event);
   main();
 });
 
@@ -73,6 +78,10 @@ async function onDidReceiveMessage(event) {
       });
       break;
     }
+    case "WINDOW": {
+      main();
+      break;
+    }
     default: {
     }
   }
@@ -104,68 +113,6 @@ const getQuerySelectorWithThirdParents = (node) => {
   return querySelector;
 };
 
-const zoomIn = (currentValue, clickedNode) => {
-  if (currentValue.depth <= 1) {
-    if (currentValue.querySelector.includes(":nth-child")) {
-      return currentValue;
-    }
-    // Want to select only this element
-  }
-
-  let nextDepth = currentValue.depth;
-  if (currentValue.querySelector.includes(" < ")) {
-    nextDepth += 1;
-  }
-
-  return moveParentDepth(currentValue, clickedNode, nextDepth);
-};
-
-const zoomOut = (currentValue, clickedNode) => {
-  if (currentValue.querySelector.startsWith("body")) {
-    return currentValue;
-  }
-
-  let nextDepth = currentValue.depth;
-  if (!currentValue.querySelector.includes(" < ")) {
-    nextDepth += 1;
-  }
-
-  return moveParentDepth(currentValue, clickedNode, nextDepth);
-};
-
-const moveParentDepth = (
-  currentValue,
-  node,
-  newDepth,
-  directChilds = false
-) => {
-  if (currentValue.depth === newDepth) {
-    // Just change directChilds prop
-    if (currentValue.querySelector.includes(" < ")) {
-      return currentValue.querySelector.split(" < ").join(" ");
-    }
-    return currentValue.querySelector.split(" ").join(" < ");
-  }
-
-  console.log(node);
-  let parentNode = node;
-  for (let i = 0; i < newDepth; i++) {
-    parentNode = parentNode.parentNode;
-  }
-
-  let querySelector = parseQuerySelector(node);
-
-  querySelector = (
-    parseQuerySelector(parentNode) +
-    " " +
-    querySelector
-  ).replace(/.miner-relative|.crx_mouse_visited/g, "");
-  return {
-    querySelector,
-    depth: currentValue.depth - 1,
-  };
-};
-
 // ----- SELECT NODE -----
 let MOUSE_VISITED_CLASSNAME = "crx_mouse_visited";
 let prevTarget;
@@ -184,127 +131,6 @@ const stopSelectNode = () => {
   });
   document.removeEventListener("mousemove", onMouseMove, true);
   document.removeEventListener("click", onClick, true);
-};
-
-const onClick = (e) => {
-  let clicked = e.target;
-  if (clicked.closest(".miner-extension-window")) {
-    return;
-  }
-  e.preventDefault();
-  e.stopImmediatePropagation();
-  const selectedNodes = document.querySelectorAll(
-    `.${MOUSE_VISITED_CLASSNAME}`
-  );
-  let value = {
-    querySelector: getQuerySelectorWithThirdParents(clicked).split(
-      `.${MOUSE_VISITED_CLASSNAME}`
-    )[0],
-    depth: 3,
-  };
-  window.postMessage(
-    {
-      type: "SELECT_NODE",
-      command: "push",
-      value: value.querySelector,
-      total: selectedNodes.length,
-    },
-    "*"
-  );
-  // clicked.classList.add("miner-relative");
-  // eslint-disable-next-line no-undef
-  // $(`<div class='miner-zooms-container'>
-  //   <button class="miner-zoom-btn" id="miner-zoom-only">Only this</button>
-  //   <button class="miner-zoom-btn" id="miner-zoom-in">Zoom in</button>
-  //   <button class="miner-zoom-btn" id="miner-zoom-out">Zoom out</button>
-  //   <button class="miner-zoom-btn" id="miner-zoom-ok">OK</button>
-  // </div>`).appendTo(clicked);
-  let prevZoomedInValue = value;
-  let prevZoomedOutValue = value;
-  // document.getElementById("miner-zoom-in").addEventListener("click", (e) => {
-  //   e.preventDefault();
-  //   let zoomedInSelector = zoomIn(prevZoomedInValue, clicked);
-  //   console.log(prevZoomedInValue, zoomedInSelector);
-  //   if (prevZoomedInValue.querySelector === zoomedInSelector.querySelector) {
-  //     return;
-  //   }
-  //   document
-  //     .querySelectorAll(prevZoomedInValue.querySelector)
-  //     .forEach((node) => {
-  //       node.classList.remove(MOUSE_VISITED_CLASSNAME);
-  //     });
-  //   prevZoomedInValue = zoomedInSelector;
-  //   document
-  //     .querySelectorAll(zoomedInSelector.querySelector)
-  //     .forEach((node) => {
-  //       node.classList.add(MOUSE_VISITED_CLASSNAME);
-  //     });
-  //   window.postMessage(
-  //     {
-  //       type: "SELECT_NODE",
-  //       command: "update",
-  //       value: zoomedInSelector,
-  //       total: selectedNodes.length,
-  //     },
-  //     "*"
-  //   );
-  // });
-  // document.getElementById("miner-zoom-out").addEventListener("click", (e) => {
-  //   e.preventDefault();
-  //   let zoomedOutSelector = zoomOut(prevZoomedOutValue, clicked);
-  //   if (prevZoomedOutValue === zoomedOutSelector) {
-  //     return;
-  //   }
-  //   document
-  //     .querySelectorAll(prevZoomedOutValue.querySelector)
-  //     .forEach((node) => {
-  //       node.classList.remove(MOUSE_VISITED_CLASSNAME);
-  //     });
-  //   prevZoomedOutValue = zoomedOutSelector;
-  //   document
-  //     .querySelectorAll(zoomedOutSelector.querySelector)
-  //     .forEach((node) => {
-  //       node.classList.add(MOUSE_VISITED_CLASSNAME);
-  //     });
-  //   window.postMessage(
-  //     {
-  //       type: "SELECT_NODE",
-  //       command: "update",
-  //       value: zoomedOutSelector,
-  //       total: selectedNodes.length,
-  //     },
-  //     "*"
-  //   );
-  // });
-  // document.getElementById("miner-zoom-ok").addEventListener("click", (e) => {
-  //   e.preventDefault();
-  //   document.querySelectorAll(`.${MOUSE_VISITED_CLASSNAME}`).forEach((node) => {
-  //     node.classList.remove(MOUSE_VISITED_CLASSNAME);
-  //   });
-  //   window.postMessage(
-  //     {
-  //       type: "SELECT_NODE",
-  //       command: "stop",
-  //       total: selectedNodes.length,
-  //     },
-  //     "*"
-  //   );
-  // });
-  // document.getElementById("miner-zoom-only").addEventListener("click", (e) => {
-  //   e.preventDefault();
-  //   document.querySelectorAll(`.${MOUSE_VISITED_CLASSNAME}`).forEach((node) => {
-  //     node.classList.remove(MOUSE_VISITED_CLASSNAME);
-  //   });
-  //   window.postMessage(
-  //     {
-  //       type: "SELECT_NODE",
-  //       command: "stop",
-  //       total: selectedNodes.length,
-  //     },
-  //     "*"
-  //   );
-  // });
-  stopSelectNode();
 };
 
 const onMouseMove = (e) => {
@@ -341,4 +167,66 @@ const onMouseMove = (e) => {
     prevTarget = hoveredTarget;
     prevQuerySelector = querySelector;
   }
+};
+
+const onClick = (e) => {
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  let clicked = e.target;
+  if (clicked.closest(".miner-extension-window")) {
+    return;
+  }
+
+  const selectedNodes = document.querySelectorAll(
+    `.${MOUSE_VISITED_CLASSNAME}`
+  );
+  let value = {
+    querySelector: getQuerySelectorWithThirdParents(clicked).split(
+      `.${MOUSE_VISITED_CLASSNAME}`
+    )[0],
+    depth: 3,
+  };
+  window.postMessage(
+    {
+      type: "SELECT_NODE",
+      command: "push",
+      value: value.querySelector,
+      total: selectedNodes.length,
+      tagName: clicked.tagName.toLowerCase(),
+    },
+    "*"
+  );
+  if (selectedNodes.length > 1) {
+    let tippyClickedMenu = tippy(clicked, {
+      allowHTML: true,
+      content: `<button class="miner-zoom-btn" id="miner-onlythis-btn">
+          Only this
+        </button>`,
+      showOnCreate: true,
+      interactive: true,
+      trigger: "manual",
+    });
+    tippyInstance.destroy();
+    document.getElementById("miner-onlythis-btn").addEventListener(
+      "click",
+      (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        tippyClickedMenu.destroy();
+        console.log(finder.finder(clicked));
+        window.postMessage(
+          {
+            type: "SELECT_NODE",
+            command: "update",
+            value: finder.finder(clicked),
+            total: 1,
+            tagName: clicked.tagName.toLowerCase(),
+          },
+          "*"
+        );
+      },
+      true
+    );
+  }
+  stopSelectNode();
 };

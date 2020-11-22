@@ -11,12 +11,15 @@ enum StepType {
   NAVIGATE = "Navigate to",
   CLICK = "Click on",
   EXTRACT_TEXT = "Extract text of",
+  EXTRACT_HREF = "Extract URL",
+  EXTRACT_IMAGE_SRC = "Extract image source",
 }
 interface Step {
   id: string;
   type: StepType;
   value: string;
   total: number;
+  tagName: string;
 }
 
 export const App = () => {
@@ -29,6 +32,7 @@ export const App = () => {
       type: StepType.NAVIGATE,
       value: window.location.href,
       total: 1,
+      tagName: "a",
     },
   ]);
 
@@ -53,6 +57,7 @@ export const App = () => {
               ? StepType.NAVIGATE
               : StepType.EXTRACT_TEXT,
             total: event.data.total,
+            tagName: event.data.tagName,
           },
         ];
         setSteps([...stepsRef.current]);
@@ -62,6 +67,10 @@ export const App = () => {
         event.data.type === "SELECT_NODE" &&
         event.data.command === "update"
       ) {
+        stepsRef.current[stepsRef.current.length - 1].value = event.data.value;
+        stepsRef.current[stepsRef.current.length - 1].total = event.data.total;
+        setSteps([...stepsRef.current]);
+        saveSteps([...stepsRef.current]);
       }
       if (event.data.type === "LOAD_STEPS") {
         if (event.data.steps) {
@@ -106,7 +115,10 @@ export const App = () => {
     window.postMessage({ type: "STORE_STEPS", steps }, "*");
   };
 
-  const handleCloseClick = () => {};
+  const handleCloseClick = () => {
+    window.postMessage({ type: "WINDOW" }, "*");
+  };
+
   return (
     <Draggable handle=".handle">
       <div
@@ -166,30 +178,31 @@ export const App = () => {
                   `}
                 >
                   <span>
-                    {idx > 0 ? (
-                      <select
-                        value={step.type}
-                        onChange={(e) => handleActionChange(e, idx)}
-                      >
-                        <option value={StepType.EXTRACT_TEXT}>
-                          {StepType.EXTRACT_TEXT}
+                    <select
+                      value={step.type}
+                      onChange={(e) => handleActionChange(e, idx)}
+                    >
+                      <option value={StepType.EXTRACT_TEXT}>
+                        {StepType.EXTRACT_TEXT}
+                      </option>
+                      {step.tagName === "img" && (
+                        <option value={StepType.EXTRACT_IMAGE_SRC}>
+                          {StepType.EXTRACT_IMAGE_SRC}
                         </option>
-                        {step.value.startsWith("button") && (
-                          <option value={StepType.CLICK}>
-                            {StepType.CLICK}
-                          </option>
-                        )}
-                        {step.value.startsWith("a") && (
-                          <option value={StepType.NAVIGATE}>
-                            {StepType.NAVIGATE}
-                          </option>
-                        )}
-                      </select>
-                    ) : (
-                      "Navigate to "
-                    )}
+                      )}
+                      {step.tagName === "a" && (
+                        <option value={StepType.EXTRACT_HREF}>
+                          {StepType.EXTRACT_HREF}
+                        </option>
+                      )}
+                      {step.tagName === "a" && (
+                        <option value={StepType.NAVIGATE}>
+                          {StepType.NAVIGATE}
+                        </option>
+                      )}
+                    </select>
                     <span>
-                      {step.value} ({step.total})
+                      {step.value} ({step.total} nodes)
                     </span>
                   </span>
                   <button onClick={() => handleDeleteStep(idx)}>X</button>
