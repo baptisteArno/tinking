@@ -9,15 +9,25 @@
   "browser_action": {
     "default_icon": "logo512.png"
   },
-  "permissions": ["activeTab"],
+  "permissions": ["activeTab", "storage", "webNavigation", "*://*/*"],
   "background": {
-    "scripts": ["background.js", "./jquery.js"]
+    "scripts": [
+      "background.js",
+      "./jquery.min.js",
+      "./popper.min.js",
+      "./tippy.min.js"
+    ]
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "all_frames": true,
-      "js": ["./content.js", "./jquery.js"],
+      "js": [
+        "./content.js",
+        "./jquery.min.js",
+        "./popper.min.js",
+        "./tippy.min.js"
+      ],
       "css": ["./index.css"],
       "run_at": "document_end"
     }

@@ -19,12 +19,13 @@
     "react-scripts": "4.0.0",
     "tailwindcss": "^2.0.1",
     "typescript": "^3.9.5",
+    "uuid": "^8.3.1",
     "web-vitals": "^0.2.2"
   },
   "scripts": {
-    "start": "react-app-rewired start",
-    "build": "cross-env INLINE_RUNTIME_CHUNK=false react-app-rewired build",
-    "test": "react-app-rewired test",
+    "start": "react-scripts start",
+    "build": "cross-env INLINE_RUNTIME_CHUNK=false react-scripts build",
+    "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -43,6 +44,7 @@
     ]
   },
   "devDependencies": {
+    "@types/uuid": "^8.3.0",
     "cross-env": "^7.0.2",
     "customize-cra": "^1.0.0",
     "react-app-rewired": "^2.1.6"

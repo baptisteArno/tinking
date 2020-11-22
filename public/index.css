@@ -3,3 +3,18 @@
   outline: 1px dashed #e9af6e !important;
   cursor: pointer !important;
 }
+
+.miner-relative {
+  position: relative !important;
+}
+
+.miner-zooms-container {
+  position: absolute;
+  width: 200px;
+  top: -25px;
+  background-color: #e9af6e;
+}
+
+.miner-zoom-btn {
+  border-radius: 100%;
+}
