@@ -15,10 +15,10 @@ chrome.runtime.onMessage.addListener(function (event) {
 });
 
 function main() {
-  const existingWindow = document.querySelector(".miner-extension-window");
+  const existingWindow = document.querySelector("#miner-extension-window");
   if (existingWindow) {
     existingWindow.parentNode.removeChild(existingWindow);
-    chrome.storage.sync.set({ currentPage: null });
+    chrome.storage.sync.clear();
     return;
   }
   const extensionOrigin = "chrome-extension://" + chrome.runtime.id;
@@ -28,7 +28,7 @@ function main() {
       .then((response) => response.text())
       .then((html) => {
         const div = document.createElement("div");
-        div.classList.add("miner-extension-window");
+        div.id = "miner-extension-window";
         document.body.appendChild(div);
         const reactHTML = html.replace(
           /\/static\//g,
@@ -36,10 +36,11 @@ function main() {
         );
         console.log("appending window...");
         // eslint-disable-next-line no-undef
-        $(reactHTML).appendTo(".miner-extension-window");
+        $(reactHTML).appendTo("#miner-extension-window");
         chrome.storage.sync.set({ currentPage: document.location.host });
         setTimeout(() => {
           chrome.storage.sync.get(["steps"], function (data) {
+            console.log(data);
             if (Object.keys(data).length === 0) {
               window.postMessage({ type: "LOAD_STEPS" }, "*");
               return;
@@ -138,7 +139,7 @@ const onMouseMove = (e) => {
   if (!hoveredTarget) {
     return;
   }
-  if (hoveredTarget.closest(".miner-extension-window")) {
+  if (hoveredTarget.closest("#miner-extension-window")) {
     return;
   }
   if (prevTarget !== hoveredTarget) {
@@ -170,12 +171,18 @@ const onMouseMove = (e) => {
 };
 
 const onClick = (e) => {
-  e.preventDefault();
-  e.stopImmediatePropagation();
   let clicked = e.target;
-  if (clicked.closest(".miner-extension-window")) {
+  if (
+    clicked.closest("#miner-extension-window") ||
+    document.getElementById("miner-onlythis-btn") === clicked
+  ) {
+    if (tippyInstance) {
+      tippyInstance.destroy();
+    }
     return;
   }
+  e.preventDefault();
+  e.stopImmediatePropagation();
 
   const selectedNodes = document.querySelectorAll(
     `.${MOUSE_VISITED_CLASSNAME}`
@@ -190,7 +197,7 @@ const onClick = (e) => {
     {
       type: "SELECT_NODE",
       command: "push",
-      value: value.querySelector,
+      selector: value.querySelector,
       total: selectedNodes.length,
       tagName: clicked.tagName.toLowerCase(),
     },
@@ -218,7 +225,7 @@ const onClick = (e) => {
           {
             type: "SELECT_NODE",
             command: "update",
-            value: finder.finder(clicked),
+            selector: finder.finder(clicked),
             total: 1,
             tagName: clicked.tagName.toLowerCase(),
           },
@@ -228,5 +235,4 @@ const onClick = (e) => {
       true
     );
   }
-  stopSelectNode();
 };
