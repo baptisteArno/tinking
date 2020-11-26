@@ -70,6 +70,14 @@ async function onDidReceiveMessage(event) {
         startSelectNode();
       } else if (event.data.command === "stop") {
         stopSelectNode();
+      } else if (event.data.command === "update") {
+        console.log(event.data);
+        onClick(
+          null,
+          event.data.selector,
+          event.data.elementIndex,
+          event.data.stepIndex
+        );
       }
       break;
     }
@@ -170,8 +178,13 @@ const onMouseMove = (e) => {
   }
 };
 
-const onClick = (e) => {
-  let clicked = e.target;
+const onClick = (e, selector, elementIndex, stepIndex) => {
+  let clicked;
+  if (selector && elementIndex !== undefined) {
+    clicked = document.querySelectorAll(selector)[elementIndex];
+  } else {
+    clicked = e.target;
+  }
   if (
     clicked.closest("#miner-extension-window") ||
     document.getElementById("miner-onlythis-btn") === clicked
@@ -181,28 +194,32 @@ const onClick = (e) => {
     }
     return;
   }
-  e.preventDefault();
-  e.stopImmediatePropagation();
+  if (e) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  }
 
   const selectedNodes = document.querySelectorAll(
     `.${MOUSE_VISITED_CLASSNAME}`
   );
-  let value = {
-    querySelector: getQuerySelectorWithThirdParents(clicked).split(
-      `.${MOUSE_VISITED_CLASSNAME}`
-    )[0],
-    depth: 3,
-  };
-  window.postMessage(
-    {
-      type: "SELECT_NODE",
-      command: "push",
-      selector: value.querySelector,
-      total: selectedNodes.length,
-      tagName: clicked.tagName.toLowerCase(),
-    },
-    "*"
-  );
+  if (e) {
+    let value = {
+      querySelector: getQuerySelectorWithThirdParents(clicked).split(
+        `.${MOUSE_VISITED_CLASSNAME}`
+      )[0],
+      depth: 3,
+    };
+    window.postMessage(
+      {
+        type: "SELECT_NODE",
+        command: "push",
+        selector: value.querySelector,
+        total: selectedNodes.length,
+        tagName: clicked.tagName.toLowerCase(),
+      },
+      "*"
+    );
+  }
   if (selectedNodes.length > 1) {
     let tippyClickedMenu = tippy(clicked, {
       allowHTML: true,
@@ -221,16 +238,30 @@ const onClick = (e) => {
         e.stopImmediatePropagation();
         tippyClickedMenu.destroy();
         console.log(finder.finder(clicked));
-        window.postMessage(
-          {
-            type: "SELECT_NODE",
-            command: "update",
-            selector: finder.finder(clicked),
-            total: 1,
-            tagName: clicked.tagName.toLowerCase(),
-          },
-          "*"
-        );
+        if (stepIndex !== undefined) {
+          window.postMessage(
+            {
+              type: "SELECT_NODE",
+              command: "update",
+              selector: finder.finder(clicked),
+              total: 1,
+              tagName: clicked.tagName.toLowerCase(),
+              stepIndex,
+            },
+            "*"
+          );
+        } else {
+          window.postMessage(
+            {
+              type: "SELECT_NODE",
+              command: "update",
+              selector: finder.finder(clicked),
+              total: 1,
+              tagName: clicked.tagName.toLowerCase(),
+            },
+            "*"
+          );
+        }
       },
       true
     );

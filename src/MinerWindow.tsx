@@ -1,7 +1,6 @@
 import React, { ChangeEvent, useRef } from "react";
 import Draggable from "react-draggable";
 import { useEffect, useState } from "react";
-import { MdDragHandle } from "react-icons/md";
 import { v4 as uuidv4 } from "uuid";
 import root from "react-shadow/emotion";
 import CopyToClipboard from "react-copy-to-clipboard";
@@ -21,8 +20,9 @@ import {
   Input,
   DarkMode,
   Code,
+  VStack,
 } from "@chakra-ui/react";
-import { CloseIcon, DeleteIcon } from "@chakra-ui/icons";
+import { CheckIcon, CloseIcon, DeleteIcon } from "@chakra-ui/icons";
 import { generateScript } from "./scriptGenerator";
 import {
   Step,
@@ -30,10 +30,16 @@ import {
   TagType,
   parseStepFromWebpage,
   getSelectorContent,
+  parseTagType,
+  parseDefaultAction,
 } from "./helperFunctions";
 import useDebounce from "use-debounce/lib/useDebounce";
+import { MdEdit } from "react-icons/md";
+import { finder } from "@medv/finder";
 
 export const MinerWindow = () => {
+  const [indexEditing, setIndexEditing] = useState<number | undefined>();
+
   const [copied, setCopied] = useState(false);
   const [script, setScript] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -77,8 +83,12 @@ export const MinerWindow = () => {
         event.data.type === "SELECT_NODE" &&
         event.data.command === "update"
       ) {
-        stepsRef.current[stepsRef.current.length - 1] = {
-          ...stepsRef.current[stepsRef.current.length - 1],
+        let index = stepsRef.current.length - 1;
+        if (event.data.stepIndex !== undefined) {
+          index = event.data.stepIndex;
+        }
+        stepsRef.current[index] = {
+          ...stepsRef.current[index],
           ...parseStepFromWebpage(event.data),
         };
         setSteps([...stepsRef.current]);
@@ -151,6 +161,68 @@ export const MinerWindow = () => {
     stepsRef.current = [...steps];
   };
 
+  const handleSelectorChange = (
+    e: ChangeEvent<HTMLInputElement>,
+    idx: number
+  ) => {
+    let selector = e.target.value;
+    steps[idx].selector = selector;
+    setSteps([...steps]);
+    if (selector === "") {
+      return;
+    }
+    let nodes;
+    const onlyThisIndex = selector.match(/\[(\d)\]/);
+    if (onlyThisIndex) {
+      selector = selector.split(`[${onlyThisIndex[1]}]`)[0].trim();
+      console.log(selector);
+    }
+    try {
+      nodes = document.querySelectorAll(selector);
+      if (onlyThisIndex) {
+        selector = finder(nodes[parseInt(onlyThisIndex[1])]);
+        nodes = document.querySelectorAll(selector);
+      }
+    } catch (e) {
+      return;
+    }
+    if (nodes && nodes.length > 0) {
+      const tagName = nodes[0].tagName.toLowerCase();
+      steps[idx] = {
+        ...steps[idx],
+        total: nodes.length,
+        tagName,
+        tagType: parseTagType(tagName),
+        action: parseDefaultAction(tagName),
+        content: getSelectorContent(selector, parseDefaultAction(tagName)),
+        selector,
+      };
+      setSteps([...steps]);
+      stepsRef.current = [...steps];
+      document.querySelectorAll(".crx_mouse_visited").forEach((node) => {
+        node.classList.remove("crx_mouse_visited");
+      });
+      document.querySelectorAll(selector).forEach((node) => {
+        node.classList.add("crx_mouse_visited");
+      });
+    }
+  };
+
+  const handleResetClick = () => {
+    stepsRef.current = [
+      {
+        id: uuidv4(),
+        action: StepAction.NAVIGATE,
+        selector: "",
+        total: 1,
+        tagName: "a",
+        tagType: TagType.LINK,
+        content: window.location.href,
+      },
+    ];
+    setSteps([...stepsRef.current]);
+  };
+
   return (
     <root.div>
       <ChakraProvider theme={theme}>
@@ -167,7 +239,7 @@ export const MinerWindow = () => {
               shadow="lg"
               w="400px"
               h="700px"
-              zIndex={99999}
+              zIndex={999999999999999}
             >
               <Flex
                 w="full"
@@ -182,7 +254,13 @@ export const MinerWindow = () => {
                 onMouseUp={() => setPointerDragPropery("grab")}
                 px="10px"
               >
-                <MdDragHandle size={24} />
+                <Button
+                  colorScheme="gray"
+                  variant="ghost"
+                  onClick={handleResetClick}
+                >
+                  Reset
+                </Button>
                 <IconButton
                   colorScheme="gray"
                   variant="ghost"
@@ -210,7 +288,11 @@ export const MinerWindow = () => {
                       {(() => {
                         let inLoop = false;
                         return steps.map((step, idx) => {
-                          if (idx > 0 && steps[idx - 1].total > 1) {
+                          if (
+                            idx > 0 &&
+                            steps[idx - 1].total > 1 &&
+                            steps[idx - 1].action === StepAction.NAVIGATE
+                          ) {
                             inLoop = true;
                           }
                           return (
@@ -219,95 +301,135 @@ export const MinerWindow = () => {
                               display="flex"
                               flexDirection="column"
                             >
-                              {idx > 0 && steps[idx - 1].total > 1 && (
-                                <Text mb={1}>
-                                  For each node:
-                                  <br />
-                                </Text>
-                              )}
                               <Flex
                                 ml={inLoop ? "20px" : 0}
                                 backgroundColor="teal.900"
                                 p="10px"
                                 rounded="lg"
                               >
-                                <Text flex="1" mr={1}>
-                                  <Select
-                                    size="sm"
-                                    mr={2}
-                                    dispay="inline-flex"
-                                    w="160px"
-                                    value={step.action}
-                                    onChange={(e) => handleActionChange(e, idx)}
-                                  >
-                                    <option value={StepAction.EXTRACT_TEXT}>
-                                      {StepAction.EXTRACT_TEXT}
-                                    </option>
-                                    {step.tagName === "img" && (
-                                      <option
-                                        value={StepAction.EXTRACT_IMAGE_SRC}
-                                      >
-                                        {StepAction.EXTRACT_IMAGE_SRC}
+                                {indexEditing === undefined ? (
+                                  <Text flex="1" mr={1}>
+                                    <Select
+                                      size="sm"
+                                      mr={2}
+                                      display="inline-flex"
+                                      w="160px"
+                                      value={step.action}
+                                      onChange={(e) =>
+                                        handleActionChange(e, idx)
+                                      }
+                                    >
+                                      <option value={StepAction.EXTRACT_TEXT}>
+                                        {StepAction.EXTRACT_TEXT}
                                       </option>
-                                    )}
-                                    {step.tagName === "a" && (
-                                      <option value={StepAction.EXTRACT_HREF}>
-                                        {StepAction.EXTRACT_HREF}
+                                      <option value={StepAction.CLICK}>
+                                        {StepAction.CLICK}
                                       </option>
+                                      {step.tagName === "img" && (
+                                        <option
+                                          value={StepAction.EXTRACT_IMAGE_SRC}
+                                        >
+                                          {StepAction.EXTRACT_IMAGE_SRC}
+                                        </option>
+                                      )}
+                                      {step.tagName === "a" && (
+                                        <option value={StepAction.EXTRACT_HREF}>
+                                          {StepAction.EXTRACT_HREF}
+                                        </option>
+                                      )}
+                                      {step.tagName === "a" && (
+                                        <option value={StepAction.NAVIGATE}>
+                                          {StepAction.NAVIGATE}
+                                        </option>
+                                      )}
+                                    </Select>
+                                    {step.tagType}{" "}
+                                    {!(
+                                      step.action === StepAction.CLICK ||
+                                      step.action === StepAction.NAVIGATE
+                                    ) && (
+                                      <>
+                                        and save it as{" "}
+                                        <Input
+                                          size="sm"
+                                          placeholder="My variable"
+                                          maxW="160px"
+                                          value={step.variableName}
+                                          onChange={(e) =>
+                                            handleInputChange(e, idx)
+                                          }
+                                        />
+                                      </>
                                     )}
-                                    {step.tagName === "a" && (
-                                      <option value={StepAction.NAVIGATE}>
-                                        {StepAction.NAVIGATE}
-                                      </option>
+                                    {step.content && (
+                                      <Box display="inline-flex" align="center">
+                                        <Tag
+                                          colorScheme="green"
+                                          whiteSpace="nowrap"
+                                          overflow="hidden"
+                                          textOverflow="ellipsis"
+                                          maxW="150px"
+                                        >
+                                          {step.content}
+                                        </Tag>
+                                      </Box>
+                                    )}{" "}
+                                    {idx > 0 && step.total > 1 && (
+                                      <Box display="inline-flex" align="center">
+                                        <Tag>{step.total} nodes</Tag>
+                                      </Box>
                                     )}
-                                  </Select>
-                                  {step.tagType}{" "}
-                                  {!(
-                                    step.action === StepAction.CLICK ||
-                                    step.action === StepAction.NAVIGATE
-                                  ) && (
-                                    <>
-                                      and save it as{" "}
-                                      <Input
-                                        size="sm"
-                                        placeholder="My variable"
-                                        maxW="160px"
-                                        value={step.variableName}
-                                        onChange={(e) =>
-                                          handleInputChange(e, idx)
-                                        }
-                                      />
-                                    </>
-                                  )}
-                                  {step.content && (
-                                    <Box display="inline-flex" align="center">
-                                      <Tag
-                                        colorScheme="green"
-                                        whiteSpace="nowrap"
-                                        overflow="hidden"
-                                        textOverflow="ellipsis"
-                                        maxW="150px"
-                                      >
-                                        {step.content}
-                                      </Tag>
-                                    </Box>
-                                  )}{" "}
-                                  {idx > 0 && step.total > 1 && (
-                                    <Box display="inline-flex" align="center">
-                                      <Tag>{step.total} nodes</Tag>
-                                    </Box>
-                                  )}
-                                </Text>
+                                  </Text>
+                                ) : (
+                                  <VStack flex="1" align="flex-start">
+                                    <Input
+                                      value={step.selector}
+                                      size="sm"
+                                      placeholder="CSS Selector"
+                                      onChange={(e) =>
+                                        handleSelectorChange(e, idx)
+                                      }
+                                    />
+                                    <Tag>{step.total} nodes</Tag>
+                                  </VStack>
+                                )}
                                 {idx > 0 && (
-                                  <IconButton
-                                    size="sm"
-                                    colorScheme="red"
-                                    aria-label="Remove"
-                                    icon={<DeleteIcon />}
-                                    onClick={() => handleDeleteStep(idx)}
-                                  />
+                                  <VStack>
+                                    <IconButton
+                                      size="sm"
+                                      colorScheme="red"
+                                      aria-label="Remove"
+                                      icon={<DeleteIcon />}
+                                      onClick={() => handleDeleteStep(idx)}
+                                    />
+                                    <IconButton
+                                      size="sm"
+                                      colorScheme="blue"
+                                      aria-label="Edit"
+                                      icon={
+                                        indexEditing !== undefined ? (
+                                          <CheckIcon />
+                                        ) : (
+                                          <MdEdit />
+                                        )
+                                      }
+                                      onClick={() =>
+                                        indexEditing !== undefined
+                                          ? setIndexEditing(undefined)
+                                          : setIndexEditing(idx)
+                                      }
+                                    />
+                                  </VStack>
                                 )}
                               </Flex>
+                              {steps[idx].total > 1 &&
+                                steps[idx].action === StepAction.NAVIGATE &&
+                                !inLoop && (
+                                  <Text mt={1}>
+                                    For each page:
+                                    <br />
+                                  </Text>
+                                )}
                             </ListItem>
                           );
                         });
