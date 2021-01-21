@@ -36,7 +36,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "cross-env INLINE_RUNTIME_CHUNK=false react-scripts build",
+    "build": "yarn lint && cross-env INLINE_RUNTIME_CHUNK=false react-scripts build",
+    "watch": "node scripts/watch.js",
+    "lint": "eslint --fix --no-error-on-unmatched-pattern -c ./.eslintrc.js \"**/*.ts*\"",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "analyze": "source-map-explorer 'build/static/js/*.js'"
@@ -59,8 +61,14 @@
   "devDependencies": {
     "@types/react-copy-to-clipboard": "^4.3.0",
     "@types/uuid": "^8.3.0",
+    "@typescript-eslint/eslint-plugin": "^4.13.0",
+    "@typescript-eslint/parser": "^4.13.0",
     "cross-env": "^7.0.2",
     "customize-cra": "^1.0.0",
+    "eslint": "^7.17.0",
+    "eslint-config-prettier": "^7.1.0",
+    "eslint-plugin-prettier": "^3.3.1",
+    "eslint-plugin-react": "^7.22.0",
     "react-app-rewired": "^2.1.6"
   }
 }

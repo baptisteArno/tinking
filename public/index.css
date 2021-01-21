@@ -8,7 +8,36 @@
   cursor: pointer !important;
 }
 
-.miner-zoom-btn {
+iframe#miner-extension-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 10px;
+}
+
+#miner-extension-window {
+  z-index: 999999999999999;
+  width: 400px;
+  height: 700px;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  border-radius: 10px;
+}
+
+#miner-extension-window .handle {
+  position: absolute;
+  width: 250px;
+  margin-left: 90px;
+  height: 60px;
+  cursor: grab;
+}
+
+#miner-extension-window .handle.grabbing {
+  cursor: grabbing;
+}
+
+#miner-onlythis-btn {
   appearance: none;
   backdrop-filter: none;
   backface-visibility: visible;
@@ -39,7 +68,6 @@
   break-after: auto;
   break-before: auto;
   break-inside: auto;
-  buffered-rendering: auto;
   caption-side: top;
   caret-color: rgb(26, 32, 44);
   clear: none;
@@ -47,9 +75,7 @@
   clip-path: none;
   clip-rule: nonzero;
   color: rgb(26, 32, 44);
-  color-interpolation: srgb;
   color-interpolation-filters: linearrgb;
-  color-rendering: auto;
   column-count: auto;
   column-gap: normal;
   column-rule-color: rgb(26, 32, 44);
@@ -59,12 +85,8 @@
   column-width: auto;
   content: normal;
   cursor: pointer;
-  cx: 0px;
-  cy: 0px;
-  d: none;
   direction: ltr;
   display: flex;
-  dominant-baseline: auto;
   empty-cells: show;
   fill: rgb(0, 0, 0);
   fill-opacity: 1;
@@ -172,13 +194,10 @@
   perspective-origin: 41.4531px 20px;
   pointer-events: auto;
   position: relative;
-  r: 0px;
   resize: none;
   right: 0px;
   row-gap: normal;
   ruby-position: over;
-  rx: auto;
-  ry: auto;
   scroll-behavior: auto;
   scroll-margin-block-end: 0px;
   scroll-margin-block-start: 0px;
@@ -192,7 +211,6 @@
   shape-margin: 0px;
   shape-outside: none;
   shape-rendering: auto;
-  speak: normal;
   stop-color: rgb(0, 0, 0);
   stop-opacity: 1;
   stroke: none;
@@ -231,7 +249,6 @@
   transition-timing-function: ease;
   unicode-bidi: normal;
   user-select: none;
-  vector-effect: none;
   vertical-align: middle;
   visibility: visible;
   white-space: nowrap;
@@ -241,8 +258,6 @@
   word-break: normal;
   word-spacing: 0px;
   writing-mode: horizontal-tb;
-  x: 0px;
-  y: 0px;
   z-index: auto;
   zoom: 1;
 }
