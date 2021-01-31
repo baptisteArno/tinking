@@ -20,8 +20,9 @@ import {
   parseDefaultAction,
   actionIsExpectingSelector,
   parseTagTypeFromAction,
+  launchNodeSelection,
 } from "./service/helperFunctions";
-import { Step, StepAction, TagType } from "./models";
+import { Step, StepAction, StepOption, TagType } from "./types";
 import { generateScript } from "./lib/scriptGenerator";
 import { v4 as uuidv4 } from "uuid";
 import { StepItem } from "./StepItem";
@@ -55,7 +56,9 @@ export const App = (): JSX.Element => {
     window.addEventListener("message", function (event) {
       if (
         event.data.type === "SELECT_NODE" &&
-        event.data.command === "update"
+        event.data.command === "update" &&
+        (event.data.optionIndex === undefined ||
+          event.data.optionIndex === null)
       ) {
         const index = event.data.stepIndex;
         stepsRef.current[index] = {
@@ -130,13 +133,6 @@ export const App = (): JSX.Element => {
     }
     setSteps([...steps]);
     stepsRef.current = [...steps];
-  };
-
-  const launchNodeSelection = (stepIndex: number, tagType?: TagType) => {
-    parent.postMessage(
-      { type: "SELECT_NODE", command: "start", stepIndex, tagType },
-      "*"
-    );
   };
 
   const stopNodeSelection = (stepIndex: number) => {
@@ -268,6 +264,12 @@ export const App = (): JSX.Element => {
     setSteps([...stepsRef.current]);
   };
 
+  const handleOptionsChange = (options: StepOption[], idx: number) => {
+    steps[idx].options = options;
+    setSteps([...steps]);
+    stepsRef.current = [...steps];
+  };
+
   return (
     <ChakraProvider theme={theme}>
       <DarkMode>
@@ -330,10 +332,13 @@ export const App = (): JSX.Element => {
                       key={step.id}
                       step={step}
                       steps={steps}
-                      idx={idx}
+                      stepIndex={idx}
                       isSelecting={idx === selectingNodeIndex}
                       onActionChange={(action) =>
                         handleActionChange(action, idx)
+                      }
+                      onOptionsChange={(options) =>
+                        handleOptionsChange(options, idx)
                       }
                       onVariableInputChange={(value) =>
                         handleVariableChange(value, idx)
@@ -348,21 +353,22 @@ export const App = (): JSX.Element => {
                       }
                     />
                   ))}
+                  <Button
+                    colorScheme="teal"
+                    onClick={handleAddStep}
+                    leftIcon={<SmallAddIcon />}
+                    size="sm"
+                    mt={0.5}
+                  >
+                    Add step
+                  </Button>
                 </OrderedList>
-                <Button
-                  colorScheme="teal"
-                  onClick={handleAddStep}
-                  minHeight="2.5rem"
-                  mt="1rem"
-                  leftIcon={<SmallAddIcon />}
-                >
-                  Add step
-                </Button>
+
                 <Button
                   colorScheme="blue"
                   onClick={handleGenerateCodeClick}
                   minHeight="2.5rem"
-                  mt={1}
+                  mt={2}
                   mb="1rem"
                 >
                   Generate code

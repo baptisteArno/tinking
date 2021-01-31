@@ -119,7 +119,11 @@ async function onDidReceiveMessage(event) {
     }
     case "SELECT_NODE": {
       if (event.data.command === "start") {
-        startSelectNode(event.data.stepIndex, event.data.tagType);
+        startSelectNode(
+          event.data.stepIndex,
+          event.data.tagType,
+          event.data.optionIndex ?? null
+        );
       } else if (event.data.command === "stop") {
         stopSelectNode(event.data.stepIndex);
       } else if (event.data.command === "update") {
@@ -127,6 +131,7 @@ async function onDidReceiveMessage(event) {
         onClick(null, event.data.stepIndex, {
           selector: event.data.selector,
           elementIndex: event.data.elementIndex,
+          optionIndex: event.data.optionIndex ?? null,
         });
       } else if (event.data.command === "findUniqueSelector") {
         const elem = document.querySelectorAll(event.data.selector)[
@@ -202,7 +207,7 @@ let prevQuerySelector;
 let tippyInstance;
 let tippyOnlyThisButton;
 
-const onStepIndex = function (stepIndex, type) {
+const onStepIndex = function (stepIndex, type, optionIndex) {
   return function actualOnClick(event) {
     let tag;
     if (type === "link") {
@@ -210,17 +215,17 @@ const onStepIndex = function (stepIndex, type) {
     } else if (type === "image") {
       tag = "img";
     }
-    onClick(event, stepIndex, { type: tag });
+    onClick(event, stepIndex, { type: tag, optionIndex });
   };
 };
 
 const handlers = [];
 
-const startSelectNode = (stepIndex, type) => {
+const startSelectNode = (stepIndex, type, optionIndex) => {
   document.addEventListener("mousemove", onMouseMove, { capture: true });
   document.addEventListener(
     "click",
-    (handlers[stepIndex] = onStepIndex(stepIndex, type)),
+    (handlers[stepIndex] = onStepIndex(stepIndex, type, optionIndex)),
     { capture: true }
   );
 };
@@ -291,7 +296,11 @@ const findClosest = (tagName, node) => {
 const tryToFindLink = (node) => findClosest("a", node);
 const tryToFindImage = (node) => findClosest("img", node);
 
-const onClick = (e, stepIndex, { type, selector, elementIndex }) => {
+const onClick = (
+  e,
+  stepIndex,
+  { type, selector, elementIndex, optionIndex }
+) => {
   let clicked;
   if (selector && elementIndex !== undefined) {
     clicked = document.querySelectorAll(selector)[elementIndex];
@@ -359,6 +368,7 @@ const onClick = (e, stepIndex, { type, selector, elementIndex }) => {
         content,
         tagName: clicked.tagName.toLowerCase(),
         stepIndex,
+        optionIndex,
       },
       "*"
     );
@@ -403,6 +413,7 @@ const onClick = (e, stepIndex, { type, selector, elementIndex }) => {
               tagName: clicked.tagName.toLowerCase(),
               content,
               stepIndex,
+              optionIndex,
             },
             "*"
           );

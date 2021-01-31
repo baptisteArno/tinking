@@ -1,4 +1,4 @@
-import { DeleteIcon, CheckIcon } from "@chakra-ui/icons";
+import { DeleteIcon, CheckIcon, SmallAddIcon } from "@chakra-ui/icons";
 import {
   ListItem,
   Flex,
@@ -9,18 +9,31 @@ import {
   VStack,
   IconButton,
   Text,
+  Button,
 } from "@chakra-ui/react";
 import React, { useEffect } from "react";
 import { useState } from "react";
 import { MdEdit } from "react-icons/md";
-import { Step, StepAction } from "../models";
+import useDebounce from "use-debounce/lib/useDebounce";
+import { launchNodeSelection } from "../service/helperFunctions";
+import {
+  Step,
+  StepAction,
+  OptionType,
+  OptionWithValue,
+  SimpleOption,
+  TagType,
+} from "../types";
 
 type StepItemProps = {
   step: Step;
   steps: Step[];
-  idx: number;
+  stepIndex: number;
   isSelecting: boolean;
   onActionChange: (newAction: StepAction) => void;
+  onOptionsChange: (
+    options: (SimpleOption | OptionWithValue | undefined)[]
+  ) => void;
   onVariableInputChange: (newVal: string) => void;
   onSelectorInputChange: (newVal: string) => void;
   onDeleteStep: () => void;
@@ -31,9 +44,10 @@ type StepItemProps = {
 export const StepItem = ({
   step,
   steps,
-  idx,
+  stepIndex,
   isSelecting,
   onActionChange,
+  onOptionsChange,
   onVariableInputChange,
   onSelectorInputChange,
   onDeleteStep,
@@ -41,10 +55,65 @@ export const StepItem = ({
   startNodeSelecting,
 }: StepItemProps): JSX.Element => {
   const [isEdittingSelector, setIsEdittingSelector] = useState(isSelecting);
+  const [options, setOptions] = useState(step.options);
+  const [optionsDebounced] = useDebounce(options, 500);
 
   useEffect(() => {
     setIsEdittingSelector(isSelecting);
   }, [isSelecting]);
+
+  useEffect(() => {
+    if (!optionsDebounced || optionsDebounced.length === 0) {
+      return;
+    }
+    onOptionsChange(optionsDebounced);
+  }, [optionsDebounced]);
+
+  const handleAddOptionClick = () => {
+    if (!options) {
+      setOptions([undefined]);
+      return;
+    }
+    setOptions([...options, undefined]);
+  };
+
+  const handleOptionChange = (option: OptionType, optionIndex: number) => {
+    console.log();
+    if (!options) {
+      return;
+    }
+    let newOption: SimpleOption | OptionWithValue;
+    if (option === OptionType.PAGINATION || option === OptionType.REGEX) {
+      newOption = {
+        type: option,
+        value: "",
+      };
+    } else {
+      newOption = {
+        type: option,
+      };
+    }
+    options[optionIndex] = newOption;
+    console.log([...options]);
+    setOptions([...options]);
+    if (option === OptionType.PAGINATION) {
+      launchNodeSelection(stepIndex, TagType.LINK, { optionIndex });
+      window.addEventListener("message", function (event) {
+        console.log(event);
+        if (
+          event.data.type === "SELECT_NODE" &&
+          event.data.command === "update" &&
+          event.data.stepIndex === stepIndex &&
+          event.data.optionIndex === optionIndex
+        ) {
+          const newOption = options[event.data.optionIndex] as OptionWithValue;
+          newOption.value = event.data.selector;
+          setOptions([...options]);
+          stopNodeSelecting();
+        }
+      });
+    }
+  };
 
   return (
     <ListItem display="flex" flexDirection="column">
@@ -57,36 +126,72 @@ export const StepItem = ({
         align="start"
       >
         {!isEdittingSelector ? (
-          <Flex
-            flex="1"
-            flexWrap="wrap"
-            style={{ gap: 10 }}
-            overflow="hidden"
-            mr={2}
-          >
-            <Tag color="blue" height="2rem">
-              {idx + 1}
-            </Tag>
-            <SelectAction step={step} onActionChange={onActionChange} />
-            {(step.action === StepAction.EXTRACT_HREF ||
-              step.action === StepAction.EXTRACT_IMAGE_SRC ||
-              step.action === StepAction.EXTRACT_TEXT) && (
-              <>
-                and save it as{" "}
-                <Input
-                  size="sm"
-                  placeholder="My variable"
-                  maxW="160px"
-                  value={step.variableName}
-                  onChange={(e) => onVariableInputChange(e.target.value)}
-                />
-              </>
+          <VStack align="start" flex={1}>
+            <Flex flexWrap="wrap" style={{ gap: 10 }}>
+              <Tag color="blue" height="2rem">
+                {stepIndex + 1}
+              </Tag>
+              <SelectAction step={step} onActionChange={onActionChange} />
+              {(step.action === StepAction.EXTRACT_HREF ||
+                step.action === StepAction.EXTRACT_IMAGE_SRC ||
+                step.action === StepAction.EXTRACT_TEXT) && (
+                <>
+                  and save it as{" "}
+                  <Input
+                    size="sm"
+                    placeholder="My variable"
+                    maxW="160px"
+                    value={step.variableName}
+                    onChange={(e) => onVariableInputChange(e.target.value)}
+                  />
+                </>
+              )}
+            </Flex>
+            {options && options.length > 0 && (
+              <Flex
+                flex="1"
+                flexWrap="wrap"
+                style={{ gap: 10 }}
+                overflow="hidden"
+                mr={2}
+              >
+                {options.map((option, idx) => (
+                  <Flex key={idx}>
+                    <SelectOption
+                      option={option?.type}
+                      onOptionChange={(option) =>
+                        handleOptionChange(option, idx)
+                      }
+                    />
+                    {option && "value" in option && (
+                      <Input
+                        size="sm"
+                        placeholder="My variable"
+                        maxW="160px"
+                        value={option.value}
+                        onChange={(e) => onVariableInputChange(e.target.value)}
+                      />
+                    )}
+                  </Flex>
+                ))}
+              </Flex>
+            )}
+            {stepIndex > 0 && step.totalSelected && step.totalSelected > 1 && (
+              <Button
+                colorScheme="teal"
+                onClick={handleAddOptionClick}
+                leftIcon={<SmallAddIcon />}
+                size="xs"
+                variant="outline"
+              >
+                Add an option
+              </Button>
             )}
             {step.content && (
               <Box
                 display="inline-flex"
                 align="center"
-                maxW="full"
+                maxW="300px"
                 whiteSpace="pre"
                 overflow="hidden"
               >
@@ -95,12 +200,12 @@ export const StepItem = ({
                 </Tag>
               </Box>
             )}{" "}
-            {idx > 0 && step.totalSelected && step.totalSelected > 1 && (
+            {stepIndex > 0 && step.totalSelected && step.totalSelected > 1 && (
               <Box display="inline-flex" align="center">
                 <Tag>{step.totalSelected} nodes</Tag>
               </Box>
             )}
-          </Flex>
+          </VStack>
         ) : (
           <VStack align="start" w="full" overflow="hidden" mr={2}>
             <Text>Click on the element you wish to extract or</Text>
@@ -126,7 +231,7 @@ export const StepItem = ({
             </VStack>
           </VStack>
         )}
-        {idx > 0 && (
+        {stepIndex > 0 && (
           <VStack>
             <IconButton
               size="sm"
@@ -154,11 +259,11 @@ export const StepItem = ({
           </VStack>
         )}
       </Flex>
-      {steps[idx]?.totalSelected !== undefined &&
+      {steps[stepIndex]?.totalSelected !== undefined &&
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         //@ts-ignore
-        steps[idx].totalSelected > 1 &&
-        steps[idx].action === StepAction.NAVIGATE && (
+        steps[stepIndex].totalSelected > 1 &&
+        steps[stepIndex].action === StepAction.NAVIGATE && (
           <Text mt={1}>
             For each link:
             <br />
@@ -189,8 +294,28 @@ const SelectAction = ({
     </option>
     <option value={StepAction.EXTRACT_HREF}>{StepAction.EXTRACT_HREF}</option>
     <option value={StepAction.NAVIGATE}>{StepAction.NAVIGATE}</option>
-    <option value={StepAction.INFINITE_SCROLL}>
-      {StepAction.INFINITE_SCROLL}
+  </Select>
+);
+
+const SelectOption = ({
+  option,
+  onOptionChange,
+}: {
+  option?: OptionType;
+  onOptionChange: (val: OptionType) => void;
+}) => (
+  <Select
+    size="sm"
+    display="inline-flex"
+    w="160px"
+    value={option}
+    onChange={(e) => onOptionChange(e.target.value as OptionType)}
+  >
+    <option>Select an option</option>
+    <option value={OptionType.INFINITE_SCROLL}>
+      {OptionType.INFINITE_SCROLL}
     </option>
+    <option value={OptionType.PAGINATION}>{OptionType.PAGINATION}</option>
+    <option value={OptionType.REGEX}>{OptionType.REGEX}</option>
   </Select>
 );

@@ -9,22 +9,34 @@ export enum StepAction {
   EXTRACT_TEXT = "Extract text",
   EXTRACT_HREF = "Extract link",
   EXTRACT_IMAGE_SRC = "Extract image URL",
-  INFINITE_SCROLL = "Infinite Scroll",
 }
+
+export enum OptionType {
+  INFINITE_SCROLL = "Infinite Scroll",
+  PAGINATION = "Pagination",
+  REGEX = "Regex",
+}
+
+export type SimpleOption = {
+  type: OptionType;
+};
+export type OptionWithValue = {
+  type: OptionType;
+  value: string;
+};
+
+export type StepOption = SimpleOption | OptionWithValue | undefined;
 
 export interface Step {
   id: string;
   action?: StepAction;
+  options?: StepOption[];
   selector?: string;
   totalSelected?: number;
   tagName?: string;
   tagType?: TagType;
   variableName?: string;
   content?: string | null;
-  cookie?: {
-    name: string;
-    value: string;
-  };
 }
 
 export interface ScrappedStep {

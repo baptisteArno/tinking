@@ -1,4 +1,4 @@
-import { TagType, StepAction, Step, ScrappedStep } from "../models";
+import { TagType, StepAction, Step, ScrappedStep } from "../types";
 
 export const parseTagTypeFromAction = (action: StepAction): TagType => {
   if (action === StepAction.EXTRACT_HREF || action === StepAction.NAVIGATE) {
@@ -72,3 +72,20 @@ export const actionIsExpectingSelector = (action: StepAction): boolean =>
     StepAction.EXTRACT_TEXT,
     StepAction.NAVIGATE,
   ].includes(action);
+
+export const launchNodeSelection = (
+  stepIndex: number,
+  tagType?: TagType,
+  params?: { optionIndex?: number }
+): void => {
+  parent.postMessage(
+    {
+      type: "SELECT_NODE",
+      command: "start",
+      stepIndex,
+      tagType,
+      optionIndex: params?.optionIndex ?? null,
+    },
+    "*"
+  );
+};

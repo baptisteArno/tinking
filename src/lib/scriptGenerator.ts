@@ -1,6 +1,6 @@
 import prettier from "prettier/standalone";
 import parserTypeScript from "prettier/parser-typescript";
-import { Step, StepAction } from "../models";
+import { OptionType, OptionWithValue, Step, StepAction } from "../types";
 
 const parseSingleCommandFromStep = (
   step: Step,
@@ -93,12 +93,58 @@ const parseSingleCommandFromStep = (
 };
 
 const parseLoopFromStep = (step: Step) => {
+  console.log(step);
+  const paginationOption = step.options?.find(
+    (option) => option?.type === OptionType.PAGINATION
+  ) as OptionWithValue | undefined;
+
+  let urlsExtractionCommand;
+  if (paginationOption) {
+    urlsExtractionCommand = `
+      let urls = []
+      urls = await page.evaluate(() => {
+        return [...document.querySelectorAll("${step.selector}")].map((node: HTMLAnchorElement) => node.href);
+      });
+      let i = 0
+      // 1000 pages max
+      console.log("Extracting URLs");
+      const paginationBar = new ProgressBar(" scrapping [:bar] :rate/bps :percent :etas", {
+        complete: "=",
+        incomplete: " ",
+        width: 20,
+      });
+      while(i <= 1000){
+        paginationBar.tick()
+        i += 1
+        const nextPageUrl = await page.evaluate(() => {
+          const elements = [
+            ...document.querySelectorAll(
+              '${paginationOption?.value}'
+            ),
+          ];
+          return (elements.pop() as HTMLAnchorElement)?.href ?? null;
+        });
+        await page.goto(nextPageUrl);
+        try{
+          await page.waitForSelector("${step.selector}")
+        }catch{
+          break;
+        }
+        urls = urls.concat(await page.evaluate(() => {
+          return [...document.querySelectorAll("${step.selector}")].map((node: HTMLAnchorElement) => node.href);
+        }))
+      }
+    `;
+  } else {
+    urlsExtractionCommand = `let urls = await page.evaluate(() => {
+      return [...document.querySelectorAll("${step.selector}")].map((node: HTMLAnchorElement) => node.href);
+    });`;
+  }
+
   switch (step.action) {
     case StepAction.NAVIGATE: {
       return `
-      let urls = await page.evaluate(() => {
-        return [...document.querySelectorAll("${step.selector}")].map((node: HTMLAnchorElement) => node.href);
-      });
+      ${urlsExtractionCommand}
       const bar = new ProgressBar(' scrapping [:bar] :rate/bps :percent :etas', {
         complete: '=',
         incomplete: ' ',
@@ -126,7 +172,11 @@ export const generateScript = (steps: Step[]): string => {
       if (idx === 0) {
         return "";
       }
-      if (step.action === StepAction.INFINITE_SCROLL) {
+      if (
+        (step.options?.findIndex(
+          (option) => option?.type === OptionType.INFINITE_SCROLL
+        ) ?? -1) !== -1
+      ) {
         utils.infiniteScroll = true;
         return "";
       }
@@ -180,7 +230,7 @@ export const generateScript = (steps: Step[]): string => {
   if (indexInLoop === undefined) {
     const object = `{${steps
       .map((step, idx) => {
-        if (idx === 0 || step.action === StepAction.INFINITE_SCROLL) {
+        if (idx === 0) {
           return "";
         }
         const variableName = step.variableName ?? `variable${idx}`;
