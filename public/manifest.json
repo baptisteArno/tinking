@@ -1,8 +1,8 @@
 {
-  "name": "Miner",
+  "name": "Tinking",
   "version": "1.0.0",
   "manifest_version": 2,
-  "description": "Strong password generator",
+  "description": "Generate a Puppeteer script with clicks",
   "icons": {
     "512": "logo512.png"
   },
