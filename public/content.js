@@ -20,7 +20,7 @@ function dragElement(elmnt) {
     pos3 = 0,
     pos4 = 0;
   document.querySelector(
-    "#miner-extension-window .handle"
+    "#tinking-extension-window .handle"
   ).onmousedown = dragMouseDown;
 
   function dragMouseDown(e) {
@@ -46,7 +46,7 @@ function dragElement(elmnt) {
 
   function closeDragElement() {
     document
-      .querySelector("#miner-extension-window .handle")
+      .querySelector("#tinking-extension-window .handle")
       .classList.remove("grabbing");
     // stop moving when mouse button is released:
     document.onmouseup = null;
@@ -55,7 +55,7 @@ function dragElement(elmnt) {
 }
 
 function main() {
-  const existingWindow = document.querySelector("#miner-extension-window");
+  const existingWindow = document.querySelector("#tinking-extension-window");
   if (existingWindow) {
     existingWindow.parentNode.removeChild(existingWindow);
     chrome.storage.sync.clear();
@@ -69,10 +69,10 @@ function main() {
       .then((html) => {
         const draggable = document.createElement("div");
         const handle = document.createElement("div");
-        draggable.id = "miner-extension-window";
+        draggable.id = "tinking-extension-window";
         handle.classList = ["handle"];
         const iframe = document.createElement("iframe");
-        iframe.id = "miner-extension-iframe";
+        iframe.id = "tinking-extension-iframe";
         draggable.appendChild(handle);
         draggable.appendChild(iframe);
         document.body.appendChild(draggable);
@@ -85,7 +85,7 @@ function main() {
         const iframeDoc = iframe.contentWindow.document;
         iframeDoc.write(reactHTML);
         iframeDoc.close();
-        dragElement(document.getElementById("miner-extension-window"));
+        dragElement(document.getElementById("tinking-extension-window"));
       })
       .catch((error) => {
         console.warn(error);
@@ -101,7 +101,7 @@ async function onDidReceiveMessage(event) {
   if (!event.data.type) {
     return;
   }
-  const iframe = document.getElementById("miner-extension-iframe");
+  const iframe = document.getElementById("tinking-extension-iframe");
   switch (event.data.type) {
     case "APP_LOADED": {
       chrome.storage.sync.get(["steps"], function (data) {
@@ -246,7 +246,7 @@ const onMouseMove = (e) => {
   if (!hoveredTarget) {
     return;
   }
-  if (hoveredTarget.closest("#miner-extension-window")) {
+  if (hoveredTarget.closest("#tinking-extension-window")) {
     return;
   }
   if (prevTarget !== hoveredTarget) {
@@ -308,8 +308,8 @@ const onClick = (
     clicked = e.target;
   }
   if (
-    clicked.closest("#miner-extension-window") ||
-    document.getElementById("miner-onlythis-btn") === clicked
+    clicked.closest("#tinking-extension-window") ||
+    document.getElementById("tinking-onlythis-btn") === clicked
   ) {
     if (tippyInstance) {
       tippyInstance.destroy();
@@ -358,7 +358,7 @@ const onClick = (
         content = selectedNodes[0].textContent;
       }
     }
-    const iframe = document.getElementById("miner-extension-iframe");
+    const iframe = document.getElementById("tinking-extension-iframe");
     iframe.contentWindow.postMessage(
       {
         type: "SELECT_NODE",
@@ -376,7 +376,7 @@ const onClick = (
   if (selectedNodes.length > 1) {
     tippyOnlyThisButton = tippy(clicked, {
       allowHTML: true,
-      content: `<button class="miner-zoom-btn" id="miner-onlythis-btn">
+      content: `<button class="tinking-zoom-btn" id="tinking-onlythis-btn">
           Only this
         </button>`,
       showOnCreate: true,
@@ -384,13 +384,13 @@ const onClick = (
       trigger: "manual",
     });
     tippyInstance.destroy();
-    document.getElementById("miner-onlythis-btn").addEventListener(
+    document.getElementById("tinking-onlythis-btn").addEventListener(
       "click",
       (e) => {
         e.preventDefault();
         e.stopImmediatePropagation();
         tippyOnlyThisButton.destroy();
-        const iframe = document.getElementById("miner-extension-iframe");
+        const iframe = document.getElementById("tinking-extension-iframe");
         let content = clicked.innerText;
         switch (type) {
           case "a": {

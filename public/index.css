@@ -1,4 +1,4 @@
-#miner-extension-window {
+#tinking-extension-window {
   position: relative;
   z-index: 999999999999999;
 }
@@ -8,14 +8,14 @@
   cursor: pointer !important;
 }
 
-iframe#miner-extension-iframe {
+iframe#tinking-extension-iframe {
   width: 100%;
   height: 100%;
   border: none;
   border-radius: 10px;
 }
 
-#miner-extension-window {
+#tinking-extension-window {
   z-index: 999999999999999;
   width: 400px;
   height: 700px;
@@ -25,7 +25,7 @@ iframe#miner-extension-iframe {
   border-radius: 10px;
 }
 
-#miner-extension-window .handle {
+#tinking-extension-window .handle {
   position: absolute;
   width: 250px;
   margin-left: 90px;
@@ -33,11 +33,11 @@ iframe#miner-extension-iframe {
   cursor: grab;
 }
 
-#miner-extension-window .handle.grabbing {
+#tinking-extension-window .handle.grabbing {
   cursor: grabbing;
 }
 
-#miner-onlythis-btn {
+#tinking-onlythis-btn {
   appearance: none;
   backdrop-filter: none;
   backface-visibility: visible;
