@@ -1,6 +1,6 @@
 ---
 name: "\U0001F9F6 Feature request"
-about: Suggest an idea for this project
+about: Suggest an idea for Tinking
 title: ''
 labels: enhancement
 assignees: baptisteArno
