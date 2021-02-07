@@ -2,67 +2,72 @@
 
 ## Extract data from any website without code, just clicks
 
-A chrome extension that sits on top of a page and allow you to create a scrapping recipe by directly selecting page's elements.
+A Chrome extension that allows you to create a scraping recipe by directly selecting a page's elements with your mouse.
 
-<img src="https://user-images.githubusercontent.com/16015833/106378952-d4c0e900-63a8-11eb-936b-18dead5e6e97.png" width="300px"/>
+<img src="https://user-images.githubusercontent.com/16015833/106378952-d4c0e900-63a8-11eb-936b-18dead5e6e97.png" alt="Tinking allows you to define stepwise rules for scraping a website's content." width="300px"/>
 
 [Watch a video demo](https://cleanshot-cloud-fra.accelerator.net/media/8732/gyXl0WDpJ0jpHVN3ccd5sf5kOOlzdPpugDhhcQKv.mp4)
 
-_This is a new tool. The code is a mess and it's very buggy. PRs are very welcome!_
+_This tool is under active development. The code could use some cleanup, and there may be bugs. PRs are very welcome!_
 
 👇
 
-# Getting started
+# Getting Started
 
-The extension isn't available on the Google Chrome Webstore for now.
+Tinkering is not yet available on the Chrome Web Store. Follow these steps to run the extension locally:
 
 ## 1. Clone the repository
 
+HTTPS:
+
 ```sh
-git clone https://github.com/baptisteArno/puppeteer-ui-extension.git
+git clone https://github.com/baptisteArno/tinking.git
 ```
 
-## 2. Install and build the extension
+SSH:
+
+```sh
+git clone git@github.com:baptisteArno/tinking.git
+```
+
+## 2. Install dependencies and build the extension
 
 Using `yarn`:
 
 ```sh
-cd puppeteer-ui-extension
-yarn
-yarn build
+yarn && yarn build
 ```
 
 Or using `npm`:
 
 ```sh
-npm i
-npm run build
+npm i && npm run build
 ```
 
-## 3. Integrate into Google Chrome (or any Chromium browser)
+## 3. Install the extension in Google Chrome (or any Chromium browser)
 
-Navigate to:
+Navigate to the following URL in Chrome:
 
 ```text
 chrome://extensions/
 ```
 
-Check the "Developer Mode" and click on "Load an unpacked extension" and select the `build` folder of the project.
+Make sure `Developer Mode` is turned on, and click the `Load unpacked` button. Select the `build` folder of the project.
 
-Now you should see the extension and you can start scrapping websites.
+You should now see Tinking listed among any other extensions that you have installed, and you can begin using it to scrape websites.
 
-_For now, you can only generates a puppeteer script written in Typescript. But I'm planning on making it friendlier_
+_For now, you can only generate a Puppeteer script that's written in TypeScript. The plan is to make this easier to use in the future._
 
 # To-Do
 
-- [x] Scrap
-- [x] Infinite Scroll
+- [x] Basic scraping
+- [x] Infinite scroll
 - [x] Pagination
-- [ ] Regex (In progress)
-- [ ] Drag'n'drop steps
+- [ ] Regex scraping (in progress)
+- [ ] Drag-and-drop steps
 
-# You couldn't scrap a specific website?
+# Couldn't scrape a particular website?
 
-The goal of this tool is to be the most universal.
+While Tinking aims to be a universal tool, it's still a work in progress, and you may run into issues scraping certain websites.
 
-Please fill in an issue and we'll take a look at what can be fixed and improved.
+Please [submit an issue](https://github.com/baptisteArno/tinking/issues/new), and we'll look into a potential fix.
