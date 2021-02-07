@@ -63,7 +63,9 @@ _For now, you can only generate a Puppeteer script that's written in TypeScript.
 - [x] Basic scraping
 - [x] Infinite scroll
 - [x] Pagination
-- [ ] Regex scraping (in progress)
+- [ ] Documentation on how to use the generated code
+- [ ] Multiple export options (pyppeteer, playwright, others?)
+- [ ] Regex to filter data from scraped text
 - [ ] Drag-and-drop steps
 
 # Couldn't scrape a particular website?
