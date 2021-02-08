@@ -128,9 +128,7 @@ export const StepItem = ({
         {!isEdittingSelector ? (
           <VStack align="start" flex={1}>
             <Flex flexWrap="wrap" style={{ gap: 10 }}>
-              <Tag color="blue" height="2rem">
-                {stepIndex + 1}
-              </Tag>
+              <Tag height="2rem">{stepIndex + 1}</Tag>
               <SelectAction step={step} onActionChange={onActionChange} />
               {(step.action === StepAction.EXTRACT_HREF ||
                 step.action === StepAction.EXTRACT_IMAGE_SRC ||
