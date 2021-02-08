@@ -80,7 +80,7 @@ function main() {
           /\/static\//g,
           `${extensionOrigin}/static/`
         );
-        chrome.storage.sync.set({ scrapping: true });
+        chrome.storage.sync.set({ currentPage: window.location.hostname });
         const iframeDoc = iframe.contentWindow.document;
         iframeDoc.write(reactHTML);
         iframeDoc.close();
