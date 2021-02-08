@@ -67,6 +67,8 @@ You should now see Tinking listed among any other extensions that you have insta
 - [x] Multiple export options (playwright, others?)
 - [ ] Regex to filter data from scraped text
 - [ ] Drag-and-drop steps
+- [ ] [DOC] Write examples
+- [ ] Cool logo
 - [ ] Ship extension to Chrome Webstore
 
 # Couldn't scrape a particular website?
