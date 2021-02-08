@@ -64,9 +64,10 @@ You should now see Tinking listed among any other extensions that you have insta
 - [x] Infinite scroll
 - [x] Pagination
 - [x] Documentation on how to use the generated code
-- [ ] Multiple export options (playwright, others?)
+- [x] Multiple export options (playwright, others?)
 - [ ] Regex to filter data from scraped text
 - [ ] Drag-and-drop steps
+- [ ] Ship extension to Chrome Webstore
 
 # Couldn't scrape a particular website?
 

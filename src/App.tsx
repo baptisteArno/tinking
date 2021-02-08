@@ -1,4 +1,4 @@
-import { CloseIcon, SmallAddIcon } from "@chakra-ui/icons";
+import { ChevronDownIcon, CloseIcon, SmallAddIcon } from "@chakra-ui/icons";
 import {
   Button,
   ChakraProvider,
@@ -7,6 +7,10 @@ import {
   Flex,
   IconButton,
   Link,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
   OrderedList,
   Spinner,
 } from "@chakra-ui/react";
@@ -164,8 +168,9 @@ export const App = (): JSX.Element => {
     );
   };
 
-  const handleGenerateCodeClick = () => {
-    setScript(generateScript(steps));
+  const handleGenerateCodeClick = (library: "puppeteer" | "playwright") => {
+    setCopied(false);
+    setScript(generateScript(steps, library));
     scrollToBottom();
   };
 
@@ -366,15 +371,29 @@ export const App = (): JSX.Element => {
                 </OrderedList>
 
                 {steps.length > 1 && (
-                  <Button
-                    colorScheme="blue"
-                    onClick={handleGenerateCodeClick}
-                    minHeight="2.5rem"
-                    mt={2}
-                    mb="1rem"
-                  >
-                    Generate code
-                  </Button>
+                  <Menu matchWidth>
+                    <MenuButton
+                      as={Button}
+                      rightIcon={<ChevronDownIcon />}
+                      colorScheme="blue"
+                      my={4}
+                      minHeight="2.5rem"
+                    >
+                      Generate code
+                    </MenuButton>
+                    <MenuList>
+                      <MenuItem
+                        onClick={() => handleGenerateCodeClick("puppeteer")}
+                      >
+                        🤖 Puppeteer (Most popular)
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => handleGenerateCodeClick("playwright")}
+                      >
+                        🎭 Playwright
+                      </MenuItem>
+                    </MenuList>
+                  </Menu>
                 )}
                 {script !== "" && (
                   <>
@@ -394,7 +413,6 @@ export const App = (): JSX.Element => {
                       <Button
                         colorScheme="green"
                         isDisabled={copied}
-                        onClick={() => setScript(generateScript(steps))}
                         minHeight="2.5rem"
                         mt={1}
                         mb="1rem"

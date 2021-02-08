@@ -7,7 +7,10 @@ const utils = {
   toTitleCase: false,
 };
 
-export const generateScript = (steps: Step[]): string => {
+export const generateScript = (
+  steps: Step[],
+  library: "puppeteer" | "playwright"
+): string => {
   let indexInLoop: number | undefined;
   let commands = steps
     .map((step: Step, idx: number) => {
@@ -108,25 +111,19 @@ export const generateScript = (steps: Step[]): string => {
   );`;
 
   const script = `
-  const puppeteer = require("puppeteer");
+  ${
+    library === "puppeteer"
+      ? `const puppeteer = require("puppeteer");`
+      : `const { chromium } = require('playwright');`
+  }
   const ProgressBar = require("progress");
   const prettier = require('prettier');
   const fs = require('fs');
   const prompts = require('prompts');
   
   (async () => {
-    const browser = await puppeteer.launch({
-      // Uncomment this line to open the browser 👇
-      // headless: false,
-      defaultViewport: null,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-      ],
-    });
+    ${parseLibrarySettings(library)}
     let data;
-
     try {
       const outputFilename = "${window.location.host}.json";
       const page = await browser.newPage();
@@ -336,4 +333,23 @@ const parseUtilsFunctions = (utils: {
       });}`;
   }
   return functions;
+};
+
+const parseLibrarySettings = (library: "puppeteer" | "playwright") => {
+  if (library === "puppeteer") {
+    return `const browser = await puppeteer.launch({
+      // Uncomment this line to open the browser 👇
+      // headless: false,
+      defaultViewport: null,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+      ],
+    });`;
+  }
+  return `const browser = await chromium.launch({
+    // Uncomment this line to open the browser 👇
+    // headless: false
+  });`;
 };
