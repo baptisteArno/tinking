@@ -6,6 +6,7 @@ import {
   DarkMode,
   Flex,
   IconButton,
+  Link,
   OrderedList,
   Spinner,
 } from "@chakra-ui/react";
@@ -378,6 +379,14 @@ export const App = (): JSX.Element => {
                 {script !== "" && (
                   <>
                     <Code>{script}</Code>
+                    <Link
+                      as="a"
+                      href="https://github.com/baptisteArno/tinking-code-starter"
+                      target="_blank"
+                      marginY={2}
+                    >
+                      How to use this code?
+                    </Link>
                     <CopyToClipboard
                       text={script}
                       onCopy={() => setCopied(true)}
