@@ -174,7 +174,7 @@ export const StepItem = ({
                 ))}
               </Flex>
             )}
-            {stepIndex > 0 && step.totalSelected && step.totalSelected > 1 && (
+            {stepIndex > 0 && step.totalSelected && step.totalSelected > 0 && (
               <Button
                 colorScheme="teal"
                 onClick={handleAddOptionClick}
