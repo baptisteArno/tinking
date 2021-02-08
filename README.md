@@ -73,4 +73,4 @@ You should now see Tinking listed among any other extensions that you have insta
 
 While Tinking aims to be a universal tool, it's still a work in progress, and you may run into issues scraping certain websites.
 
-Please [submit an issue](https://github.com/baptisteArno/tinking/issues/new), and we'll look into a potential fix.
+Please [submit an issue](https://github.com/baptisteArno/tinking/issues/new/choose), and we'll look into a potential fix.
