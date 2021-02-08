@@ -56,15 +56,16 @@ Make sure `Developer Mode` is turned on, and click the `Load unpacked` button. S
 
 You should now see Tinking listed among any other extensions that you have installed, and you can begin using it to scrape websites.
 
-_For now, you can only generate a Puppeteer script that's written in TypeScript. The plan is to make this easier to use in the future._
+👉 [How to use the generated code?](https://github.com/baptisteArno/tinking-code-starter)
 
 # To-Do
 
 - [x] Basic scraping
 - [x] Infinite scroll
 - [x] Pagination
-- [ ] Documentation on how to use the generated code
-- [ ] Multiple export options (pyppeteer, playwright, others?)
+- [x] Documentation on how to use the generated code
+- [ ] Button to delete an option in a step
+- [ ] Multiple export options (playwright, others?)
 - [ ] Regex to filter data from scraped text
 - [ ] Drag-and-drop steps
 

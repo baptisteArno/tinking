@@ -364,15 +364,17 @@ export const App = (): JSX.Element => {
                   </Button>
                 </OrderedList>
 
-                <Button
-                  colorScheme="blue"
-                  onClick={handleGenerateCodeClick}
-                  minHeight="2.5rem"
-                  mt={2}
-                  mb="1rem"
-                >
-                  Generate code
-                </Button>
+                {steps.length > 1 && (
+                  <Button
+                    colorScheme="blue"
+                    onClick={handleGenerateCodeClick}
+                    minHeight="2.5rem"
+                    mt={2}
+                    mb="1rem"
+                  >
+                    Generate code
+                  </Button>
+                )}
                 {script !== "" && (
                   <>
                     <Code>{script}</Code>
