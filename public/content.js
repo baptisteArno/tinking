@@ -14,6 +14,11 @@ chrome.runtime.onMessage.addListener(function (event) {
   main();
 });
 
+const selectNodeOverlay = document.createElement("div");
+selectNodeOverlay.classList.add("tinking-select-overlay");
+const overlayContent = document.createElement("div");
+selectNodeOverlay.appendChild(overlayContent);
+
 function dragElement(elmnt) {
   var pos1 = 0,
     pos2 = 0,
@@ -85,6 +90,7 @@ function main() {
         iframeDoc.write(reactHTML);
         iframeDoc.close();
         dragElement(document.getElementById("tinking-extension-window"));
+        document.body.prepend(selectNodeOverlay);
       })
       .catch((error) => {
         console.warn(error);
@@ -217,6 +223,14 @@ const onStepIndex = function (stepIndex, type, optionIndex) {
 const handlers = [];
 
 const startSelectNode = (stepIndex, type, optionIndex) => {
+  if (type === "link") {
+    overlayContent.innerHTML = "👇 Click on the link you wish to extract";
+  } else if (type === "image") {
+    overlayContent.innerHTML = "👇 Click on the image you wish to extract";
+  } else {
+    overlayContent.innerHTML = "👇 Click on the element you wish to extract";
+  }
+  selectNodeOverlay.style.display = "flex";
   document.addEventListener("mousemove", onMouseMove, { capture: true });
   document.addEventListener(
     "click",
@@ -244,6 +258,7 @@ const onMouseMove = (e) => {
   if (hoveredTarget.closest("#tinking-extension-window")) {
     return;
   }
+  selectNodeOverlay.style.display = "none";
   if (prevTarget !== hoveredTarget) {
     if (prevQuerySelector) {
       document

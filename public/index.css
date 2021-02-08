@@ -262,3 +262,23 @@ iframe#tinking-extension-iframe {
   z-index: auto;
   zoom: 1;
 }
+
+.tinking-select-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 999999;
+  background-color: rgba(0, 0, 0, 0.5);
+  width: 100vw;
+  height: 100vh;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.tinking-select-overlay > div {
+  border-radius: 20px;
+  background-color: white;
+  color: black;
+  padding: 20px;
+}
