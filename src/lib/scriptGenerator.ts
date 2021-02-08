@@ -178,7 +178,6 @@ export const generateScript = (steps: Step[]): string => {
         ) ?? -1) !== -1
       ) {
         utils.infiniteScroll = true;
-        return "";
       }
       if (
         step.totalSelected &&
