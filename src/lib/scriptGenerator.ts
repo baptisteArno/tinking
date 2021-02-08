@@ -249,6 +249,7 @@ const parseLoopFromStep = (step: Step) => {
         complete: "=",
         incomplete: " ",
         width: 20,
+        total: 1000
       });
       while(i <= 1000){
         paginationBar.tick()

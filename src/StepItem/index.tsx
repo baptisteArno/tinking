@@ -1,4 +1,9 @@
-import { DeleteIcon, CheckIcon, SmallAddIcon } from "@chakra-ui/icons";
+import {
+  DeleteIcon,
+  CheckIcon,
+  SmallAddIcon,
+  CloseIcon,
+} from "@chakra-ui/icons";
 import {
   ListItem,
   Flex,
@@ -11,7 +16,7 @@ import {
   Text,
   Button,
 } from "@chakra-ui/react";
-import React, { useEffect } from "react";
+import React, { ChangeEvent, useEffect } from "react";
 import { useState } from "react";
 import { MdEdit } from "react-icons/md";
 import useDebounce from "use-debounce/lib/useDebounce";
@@ -57,19 +62,23 @@ export const StepItem = ({
   const [isEdittingSelector, setIsEdittingSelector] = useState(isSelecting);
   const [options, setOptions] = useState(step.options);
   const [optionsDebounced] = useDebounce(options, 500);
+  const [isSelectingPaginateElement, setIsSelectingPaginateElement] = useState(
+    false
+  );
 
   useEffect(() => {
     setIsEdittingSelector(isSelecting);
   }, [isSelecting]);
 
   useEffect(() => {
-    if (!optionsDebounced || optionsDebounced.length === 0) {
+    if (!optionsDebounced) {
       return;
     }
     onOptionsChange(optionsDebounced);
   }, [optionsDebounced]);
 
   const handleAddOptionClick = () => {
+    if (isSelectingPaginateElement) stopNodeSelecting();
     if (!options) {
       setOptions([undefined]);
       return;
@@ -78,7 +87,6 @@ export const StepItem = ({
   };
 
   const handleOptionChange = (option: OptionType, optionIndex: number) => {
-    console.log();
     if (!options) {
       return;
     }
@@ -97,9 +105,9 @@ export const StepItem = ({
     console.log([...options]);
     setOptions([...options]);
     if (option === OptionType.PAGINATION) {
+      setIsSelectingPaginateElement(true);
       launchNodeSelection(stepIndex, TagType.LINK, { optionIndex });
       window.addEventListener("message", function (event) {
-        console.log(event);
         if (
           event.data.type === "SELECT_NODE" &&
           event.data.command === "update" &&
@@ -115,6 +123,23 @@ export const StepItem = ({
     }
   };
 
+  const handleDeleteOptionClick = (optionIndex: number) => {
+    if (isSelectingPaginateElement) stopNodeSelecting();
+    if (!options) return;
+    options.splice(optionIndex, 1);
+    setOptions([...options]);
+  };
+
+  const handleOptionValueChange = (
+    e: ChangeEvent<HTMLInputElement>,
+    option: OptionWithValue
+  ) => {
+    if (isSelectingPaginateElement) stopNodeSelecting();
+    if (!options) return;
+    option.value = e.target.value;
+    setOptions([...options]);
+  };
+
   return (
     <ListItem display="flex" flexDirection="column">
       <Flex
@@ -126,35 +151,34 @@ export const StepItem = ({
         align="start"
       >
         {!isEdittingSelector ? (
-          <VStack align="start" flex={1}>
-            <Flex flexWrap="wrap" style={{ gap: 10 }}>
+          <VStack align="stretch" flex={1} mr={1}>
+            <Flex style={{ gap: 10 }}>
               <Tag height="2rem">{stepIndex + 1}</Tag>
               <SelectAction step={step} onActionChange={onActionChange} />
               {(step.action === StepAction.EXTRACT_HREF ||
                 step.action === StepAction.EXTRACT_IMAGE_SRC ||
                 step.action === StepAction.EXTRACT_TEXT) && (
-                <>
-                  and save it as{" "}
-                  <Input
-                    size="sm"
-                    placeholder="My variable"
-                    maxW="160px"
-                    value={step.variableName}
-                    onChange={(e) => onVariableInputChange(e.target.value)}
-                  />
-                </>
+                <p>and save it as</p>
               )}
             </Flex>
+            {(step.action === StepAction.EXTRACT_HREF ||
+              step.action === StepAction.EXTRACT_IMAGE_SRC ||
+              step.action === StepAction.EXTRACT_TEXT) && (
+              <Input
+                size="sm"
+                placeholder="My variable"
+                value={step.variableName}
+                onChange={(e) => onVariableInputChange(e.target.value)}
+              />
+            )}
             {options && options.length > 0 && (
-              <Flex
-                flex="1"
-                flexWrap="wrap"
-                style={{ gap: 10 }}
-                overflow="hidden"
-                mr={2}
-              >
+              <VStack flex="1" overflow="hidden" alignItems="stretch">
                 {options.map((option, idx) => (
-                  <Flex key={idx}>
+                  <Flex
+                    key={idx}
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
                     <SelectOption
                       option={option?.type}
                       onOptionChange={(option) =>
@@ -163,16 +187,25 @@ export const StepItem = ({
                     />
                     {option && "value" in option && (
                       <Input
+                        ml={1}
                         size="sm"
-                        placeholder="My variable"
+                        placeholder="Click on an element"
                         maxW="160px"
                         value={option.value}
-                        onChange={(e) => onVariableInputChange(e.target.value)}
+                        onChange={(e) => handleOptionValueChange(e, option)}
                       />
                     )}
+                    <IconButton
+                      size="xs"
+                      ml={1}
+                      icon={<CloseIcon />}
+                      aria-label="Delete option"
+                      variant="ghost"
+                      onClick={() => handleDeleteOptionClick(idx)}
+                    />
                   </Flex>
                 ))}
-              </Flex>
+              </VStack>
             )}
             {stepIndex > 0 && step.totalSelected && step.totalSelected > 0 && (
               <Button

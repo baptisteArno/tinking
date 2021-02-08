@@ -80,7 +80,6 @@ function main() {
           /\/static\//g,
           `${extensionOrigin}/static/`
         );
-        console.log("appending window...");
         chrome.storage.sync.set({ scrapping: true });
         const iframeDoc = iframe.contentWindow.document;
         iframeDoc.write(reactHTML);
@@ -105,7 +104,6 @@ async function onDidReceiveMessage(event) {
   switch (event.data.type) {
     case "APP_LOADED": {
       chrome.storage.sync.get(["steps"], function (data) {
-        console.log(data);
         if (Object.keys(data).length === 0) {
           iframe.contentWindow.postMessage({ type: "LOAD_STEPS" }, "*");
           return;
@@ -127,7 +125,6 @@ async function onDidReceiveMessage(event) {
       } else if (event.data.command === "stop") {
         stopSelectNode(event.data.stepIndex);
       } else if (event.data.command === "update") {
-        console.log(event.data);
         onClick(null, event.data.stepIndex, {
           selector: event.data.selector,
           elementIndex: event.data.elementIndex,
@@ -153,9 +150,7 @@ async function onDidReceiveMessage(event) {
       break;
     }
     case "STORE_STEPS": {
-      chrome.storage.sync.set({ steps: event.data.steps }, function () {
-        console.log("Value saved");
-      });
+      chrome.storage.sync.set({ steps: event.data.steps });
       break;
     }
     case "WINDOW": {
@@ -323,7 +318,6 @@ const onClick = (
 
   let selectedNodes = document.querySelectorAll(`.${MOUSE_VISITED_CLASSNAME}`);
   if (type && clicked.tagName.toLowerCase() !== type) {
-    console.log("Trying to find ", type);
     switch (type) {
       case "a": {
         clicked = tryToFindLink(clicked);
@@ -402,7 +396,6 @@ const onClick = (
             break;
           }
         }
-        console.log(clicked.href);
         if (stepIndex !== undefined) {
           iframe.contentWindow.postMessage(
             {
