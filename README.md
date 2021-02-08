@@ -14,7 +14,7 @@ _This tool is under active development. The code could use some cleanup, and the
 
 # Getting Started
 
-Tinkering is not yet available on the Chrome Web Store. Follow these steps to run the extension locally:
+Tinking is not yet available on the Chrome Web Store. Follow these steps to run the extension locally:
 
 ## 1. Clone the repository
 
