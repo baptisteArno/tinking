@@ -38,6 +38,7 @@ iframe#tinking-extension-iframe {
 }
 
 #tinking-onlythis-btn {
+  align-items: center;
   appearance: none;
   backdrop-filter: none;
   backface-visibility: visible;
