@@ -1,6 +1,7 @@
 import prettier from "prettier/standalone";
 import babelParser from "prettier/parser-babel";
 import { OptionType, OptionWithValue, Step, StepAction } from "../types";
+import { isAnExtractionAction } from "../service/helperFunctions";
 
 const utils = {
   infiniteScroll: false,
@@ -48,7 +49,7 @@ export const generateScript = (
           ? step.variableName
           : "variable" + idx;
       let field = variableName;
-      if (step.action === StepAction.EXTRACT_TEXT) {
+      if (isAnExtractionAction(step.action)) {
         const formattedVariableName =
           variableName.charAt(0).toUpperCase() + variableName.slice(1);
         field = `${variableName}: formatted${formattedVariableName}`;
@@ -85,10 +86,7 @@ export const generateScript = (
             ? step.variableName
             : "variable" + idx;
         let field = variableName;
-        if (
-          step.action === StepAction.EXTRACT_TEXT &&
-          step.totalSelected === 1
-        ) {
+        if (isAnExtractionAction(step.action) && step.totalSelected === 1) {
           const formattedVariableName =
             variableName.charAt(0).toUpperCase() + variableName.slice(1);
           field = `${variableName}: formatted${formattedVariableName}`;
@@ -140,8 +138,6 @@ export const generateScript = (
   })();
   ${parseUtilsFunctions(utils)}
   `;
-
-  console.log(script);
   return prettier.format(script, {
     parser: "babel",
     plugins: [babelParser],
@@ -167,6 +163,9 @@ const parseSingleCommandFromStep = (
     }
     `;
   }
+  const regexOption = step.options.find(
+    (option) => option?.type === OptionType.REGEX
+  ) as OptionWithValue;
   switch (step.action) {
     case StepAction.NAVIGATE: {
       command += `
@@ -190,12 +189,9 @@ const parseSingleCommandFromStep = (
           const element = document.querySelector("${step.selector}")
           return element?.textContent;
         });
-        const formatted${
+        let formatted${
           variableName.charAt(0).toUpperCase() + variableName.slice(1)
-        } = ${variableName}?.replace(/(\\r\\n|\\n|\\r)/gm, '')
-        .replace(/ +(?= )/g, '')
-        // .replace(/text/gm, '')
-        .trim() ?? null
+        } = ${variableName}
         `;
       }
       break;
@@ -212,7 +208,11 @@ const parseSingleCommandFromStep = (
         const ${variableName} = await page.evaluate(() => {
           const element = document.querySelector("${step.selector}")
           return element?.src ?? null;
-        });`;
+        });
+        let formatted${
+          variableName.charAt(0).toUpperCase() + variableName.slice(1)
+        } = ${variableName}
+        `;
       }
       break;
     }
@@ -221,8 +221,23 @@ const parseSingleCommandFromStep = (
       const ${variableName} = await page.evaluate(() => {
         const element = document.querySelector("${step.selector}")
         return element?.href ?? null;
-      });`;
+      });
+      let formatted${
+        variableName.charAt(0).toUpperCase() + variableName.slice(1)
+      } = ${variableName}
+      `;
     }
+  }
+  if (regexOption) {
+    command += `const regex = new RegExp("${regexOption.value}", "gm");
+    const matchedArray = [...${variableName}.matchAll(regex)];
+    const match = matchedArray[0][1];
+    if (match !== "") {
+      formatted${
+        variableName.charAt(0).toUpperCase() + variableName.slice(1)
+      } = match
+    }
+    `;
   }
   return command;
 };

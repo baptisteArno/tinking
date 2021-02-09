@@ -30,7 +30,7 @@ export type StepOption = SimpleOption | OptionWithValue | undefined;
 export interface Step {
   id: string;
   action?: StepAction;
-  options?: StepOption[];
+  options: StepOption[];
   selector?: string;
   totalSelected?: number;
   tagName?: string;

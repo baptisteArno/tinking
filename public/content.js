@@ -211,7 +211,7 @@ let tippyOnlyThisButton;
 const onStepIndex = function (stepIndex, type, optionIndex) {
   return function actualOnClick(event) {
     let tag;
-    if (type === "link") {
+    if (type === "link" || type === "pagination") {
       tag = "a";
     } else if (type === "image") {
       tag = "img";
@@ -227,6 +227,9 @@ const startSelectNode = (stepIndex, type, optionIndex) => {
     overlayContent.innerHTML = "👇 Click on the link you wish to extract";
   } else if (type === "image") {
     overlayContent.innerHTML = "👇 Click on the image you wish to extract";
+  } else if (type === "pagination") {
+    overlayContent.innerHTML =
+      '👇 Click on the "next" element of the pagination bar';
   } else {
     overlayContent.innerHTML = "👇 Click on the element you wish to extract";
   }
@@ -400,7 +403,7 @@ const onClick = (
         e.stopImmediatePropagation();
         tippyOnlyThisButton.destroy();
         const iframe = document.getElementById("tinking-extension-iframe");
-        let content = clicked.innerText;
+        let content = clicked.textContent;
         switch (type) {
           case "a": {
             content = clicked.href;

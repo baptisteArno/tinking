@@ -55,7 +55,9 @@ export const getSelectorContent = (
   return;
 };
 
-export const parseStepFromWebpage = (data: ScrappedStep): Omit<Step, "id"> => {
+export const parseStepFromWebpage = (
+  data: ScrappedStep
+): Omit<Step, "id" | "options"> => {
   return {
     selector: data.selector,
     totalSelected: data.total,
@@ -73,9 +75,16 @@ export const actionIsExpectingSelector = (action: StepAction): boolean =>
     StepAction.NAVIGATE,
   ].includes(action);
 
+export const isAnExtractionAction = (action?: StepAction): boolean =>
+  [
+    StepAction.EXTRACT_HREF,
+    StepAction.EXTRACT_IMAGE_SRC,
+    StepAction.EXTRACT_TEXT,
+  ].includes(action ?? StepAction.NAVIGATE);
+
 export const launchNodeSelection = (
   stepIndex: number,
-  tagType?: TagType,
+  tagType?: TagType | "pagination",
   params?: { optionIndex?: number }
 ): void => {
   parent.postMessage(
@@ -85,6 +94,27 @@ export const launchNodeSelection = (
       stepIndex,
       tagType,
       optionIndex: params?.optionIndex ?? null,
+    },
+    "*"
+  );
+};
+
+export const stopNodeSelection = (stepIndex: number): void => {
+  parent.postMessage({ type: "SELECT_NODE", command: "stop", stepIndex }, "*");
+};
+
+export const findUniqueSelector = (
+  selector: string,
+  index: number,
+  selectingNodeIndex: number
+): void => {
+  parent.postMessage(
+    {
+      type: "SELECT_NODE",
+      command: "findUniqueSelector",
+      selector,
+      index,
+      selectingNodeIndex,
     },
     "*"
   );
