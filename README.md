@@ -68,8 +68,10 @@ You should now see Tinking listed among any other extensions that you have insta
 - [x] Regex to filter data from scraped text
 - [ ] Drag-and-drop steps
 - [ ] [DOC] Write examples
+- [ ] Unit tests
 - [ ] Cool logo
-- [ ] Ship extension to Chrome Webstore
+- [ ] Ship extension to Chrome Web store (Waiting for Google review)
+- [ ] Github action to automatically publish new versions on Chrome Web Store
 
 # Couldn't scrape a particular website?
 
