@@ -10,24 +10,27 @@ import {
   IconButton,
   Text,
   Button,
+  OrderedList,
 } from "@chakra-ui/react";
 import React, { ChangeEvent, useEffect, useRef } from "react";
 import { useState } from "react";
 import { MdEdit } from "react-icons/md";
-import useDebounce from "use-debounce/lib/useDebounce";
 import {
   actionIsExpectingSelector,
   findUniqueSelector,
   getSelectorContent,
   launchNodeSelection,
+  startRecordingClicksKeys,
   parseDefaultAction,
   parseStepFromWebpage,
   parseTagType,
   parseTagTypeFromAction,
   stopNodeSelection,
+  stopRecordingClicksKeys,
 } from "../service/helperFunctions";
-import { Step, StepAction, StepOption } from "../types";
+import { KeyInput, MouseClick, Step, StepAction, StepOption } from "../types";
 import { OptionItem } from "./OptionItem";
+import { RecordItem } from "./RecordItem";
 
 type StepItemProps = {
   step: Step;
@@ -46,7 +49,6 @@ export const StepItem = ({
   const stepRefForEventCallbacks = useRef<Step>(step);
   const [currentStep, setCurrentStep] = useState(step);
   const [formattedContent, setFormattedContent] = useState(step.content);
-  const [currentStepDebounced] = useDebounce(currentStep, 500);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleIncomingMessageFromPage = (event: any) => {
@@ -74,6 +76,47 @@ export const StepItem = ({
         selector: event.data.selector,
       });
     }
+    if (
+      event.data.type === "RECORD_CLICKS_KEYS" &&
+      event.data.command === "update" &&
+      event.data.stepIndex === stepIndex
+    ) {
+      if (!stepRefForEventCallbacks.current.recordedClicksAndKeys) return;
+      const recordedClicksAndKeys =
+        stepRefForEventCallbacks.current.recordedClicksAndKeys;
+      if (event.data.selector) {
+        recordedClicksAndKeys?.push({ selector: event.data.selector });
+      } else {
+        const char = event.data.input;
+        if (char === "CapsLock") return;
+        const lastRecord = [
+          ...stepRefForEventCallbacks.current.recordedClicksAndKeys,
+        ].pop();
+        if (lastRecord && "input" in lastRecord) {
+          let input;
+          if (char === "Backspace") {
+            input = lastRecord.input.substr(0, lastRecord.input.length - 1);
+          } else if (char === "Space") {
+            input = lastRecord.input + " ";
+            // Ignore other keys than letter
+          } else if (char.length > 1) {
+            return;
+          } else {
+            input = lastRecord.input + char;
+          }
+          recordedClicksAndKeys.splice(recordedClicksAndKeys.length - 1, 1, {
+            input,
+          });
+        } else {
+          if (char.length > 1) return;
+          recordedClicksAndKeys?.push({ input: char });
+        }
+      }
+      setCurrentStep({
+        ...stepRefForEventCallbacks.current,
+        recordedClicksAndKeys,
+      });
+    }
   };
 
   useEffect(() => {
@@ -84,12 +127,12 @@ export const StepItem = ({
   }, []);
 
   useEffect(() => {
-    if (!currentStepDebounced) {
+    if (!currentStep) {
       return;
     }
-    stepRefForEventCallbacks.current = currentStepDebounced;
-    onStepChange(currentStepDebounced);
-  }, [currentStepDebounced]);
+    stepRefForEventCallbacks.current = currentStep;
+    onStepChange(currentStep);
+  }, [currentStep]);
 
   const handleAddOptionClick = () => {
     stopNodeSelection(stepIndex);
@@ -118,8 +161,12 @@ export const StepItem = ({
   };
 
   const handleActionChange = (action: StepAction) => {
-    setCurrentStep({ ...step, action });
-    if (!currentStep.selector && actionIsExpectingSelector(action)) {
+    if (action === StepAction.RECORD_CLICKS_KEYS) {
+      setCurrentStep({ ...currentStep, action, recordedClicksAndKeys: [] });
+      startRecordingClicksKeys(stepIndex);
+      setIsEdittingSelector(true);
+    } else if (!currentStep.selector && actionIsExpectingSelector(action)) {
+      setCurrentStep({ ...currentStep, action });
       launchNodeSelection(stepIndex, parseTagTypeFromAction(action));
       setIsEdittingSelector(true);
     } else {
@@ -189,6 +236,21 @@ export const StepItem = ({
     }
   };
 
+  const handleRecordChange = (
+    newRecord: KeyInput | MouseClick,
+    idx: number
+  ) => {
+    if (!currentStep.recordedClicksAndKeys) return;
+    currentStep.recordedClicksAndKeys[idx] = newRecord;
+    setCurrentStep({ ...currentStep });
+  };
+
+  const handleRecordDelete = (idx: number) => {
+    if (!currentStep.recordedClicksAndKeys) return;
+    currentStep.recordedClicksAndKeys.splice(idx, 1);
+    setCurrentStep({ ...currentStep });
+  };
+
   return (
     <ListItem display="flex" flexDirection="column">
       <Flex
@@ -228,6 +290,17 @@ export const StepItem = ({
                 }
               />
             )}
+            {currentStep.recordedClicksAndKeys &&
+              currentStep.recordedClicksAndKeys?.map((record, idx) => (
+                <RecordItem
+                  key={idx}
+                  record={record}
+                  onRecordChange={(newRecord) =>
+                    handleRecordChange(newRecord, idx)
+                  }
+                  onRecordDelete={() => handleRecordDelete(idx)}
+                />
+              ))}
             {currentStep.options && currentStep.options.length > 0 && (
               <VStack flex="1" overflow="hidden" alignItems="stretch">
                 {currentStep.options.map((_, idx) => (
@@ -280,27 +353,53 @@ export const StepItem = ({
           </VStack>
         ) : (
           <VStack align="start" w="full" overflow="hidden" mr={2}>
-            <Text>Click on the element you wish to extract or</Text>
-            <VStack flex="1" align="start" w="full">
-              <Input
-                value={currentStep.selector ?? ""}
-                size="sm"
-                placeholder="Type a query selector"
-                onChange={handleSelectorChange}
-              />
-              {currentStep.totalSelected && (
-                <Flex maxW="full" flexWrap="wrap" style={{ gap: 5 }}>
-                  {currentStep.content && (
-                    <Tag whiteSpace="pre" overflow="hidden">
-                      {currentStep.content}
-                    </Tag>
+            {currentStep.recordedClicksAndKeys ? (
+              <>
+                <Text>⌨️ Recording... </Text>
+                <OrderedList>
+                  {currentStep.recordedClicksAndKeys.map((recorded, idx) => {
+                    return (
+                      <ListItem key={idx}>
+                        {"selector" in recorded ? (
+                          <>
+                            Click:{" "}
+                            <Tag whiteSpace="pre" overflow="hidden">
+                              {recorded.selector}
+                            </Tag>
+                          </>
+                        ) : (
+                          `Type: ${recorded.input}`
+                        )}
+                      </ListItem>
+                    );
+                  })}
+                </OrderedList>
+              </>
+            ) : (
+              <>
+                <Text>Click on the element you wish to extract or</Text>
+                <VStack flex="1" align="start" w="full">
+                  <Input
+                    value={currentStep.selector ?? ""}
+                    size="sm"
+                    placeholder="Type a query selector"
+                    onChange={handleSelectorChange}
+                  />
+                  {currentStep.totalSelected && (
+                    <Flex maxW="full" flexWrap="wrap" style={{ gap: 5 }}>
+                      {currentStep.content && (
+                        <Tag whiteSpace="pre" overflow="hidden">
+                          {currentStep.content}
+                        </Tag>
+                      )}
+                      <Tag whiteSpace="pre" overflow="hidden">
+                        {currentStep.totalSelected} elements
+                      </Tag>
+                    </Flex>
                   )}
-                  <Tag whiteSpace="pre" overflow="hidden">
-                    {currentStep.totalSelected} elements
-                  </Tag>
-                </Flex>
-              )}
-            </VStack>
+                </VStack>
+              </>
+            )}
           </VStack>
         )}
         {stepIndex > 0 && (
@@ -317,14 +416,27 @@ export const StepItem = ({
               colorScheme="blue"
               aria-label="Edit"
               icon={isEdittingSelector ? <CheckIcon /> : <MdEdit />}
-              disabled={isEdittingSelector && !currentStep.totalSelected}
+              disabled={
+                isEdittingSelector &&
+                !currentStep.totalSelected &&
+                (!currentStep.recordedClicksAndKeys ||
+                  currentStep.recordedClicksAndKeys?.length === 0)
+              }
               onClick={() => {
                 setIsEdittingSelector(!isEdittingSelector);
                 if (isEdittingSelector) {
-                  stopNodeSelection(stepIndex);
+                  if (currentStep.recordedClicksAndKeys) {
+                    stopRecordingClicksKeys(stepIndex);
+                  } else {
+                    stopNodeSelection(stepIndex);
+                  }
                 }
                 if (!isEdittingSelector) {
-                  launchNodeSelection(stepIndex, currentStep.tagType);
+                  if (currentStep.recordedClicksAndKeys) {
+                    startRecordingClicksKeys(stepIndex);
+                  } else {
+                    launchNodeSelection(stepIndex, currentStep.tagType);
+                  }
                 }
               }}
             />
@@ -364,5 +476,8 @@ const SelectAction = ({
     </option>
     <option value={StepAction.EXTRACT_HREF}>{StepAction.EXTRACT_HREF}</option>
     <option value={StepAction.NAVIGATE}>{StepAction.NAVIGATE}</option>
+    <option value={StepAction.RECORD_CLICKS_KEYS}>
+      {StepAction.RECORD_CLICKS_KEYS}
+    </option>
   </Select>
 );

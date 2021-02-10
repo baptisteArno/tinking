@@ -103,6 +103,26 @@ export const stopNodeSelection = (stepIndex: number): void => {
   parent.postMessage({ type: "SELECT_NODE", command: "stop", stepIndex }, "*");
 };
 
+export const startRecordingClicksKeys = (stepIndex: number): void =>
+  parent.postMessage(
+    {
+      type: "RECORD_CLICKS_KEYS",
+      command: "start",
+      stepIndex,
+    },
+    "*"
+  );
+
+export const stopRecordingClicksKeys = (stepIndex: number): void =>
+  parent.postMessage(
+    {
+      type: "RECORD_CLICKS_KEYS",
+      command: "stop",
+      stepIndex,
+    },
+    "*"
+  );
+
 export const findUniqueSelector = (
   selector: string,
   index: number,

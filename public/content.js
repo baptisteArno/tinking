@@ -14,6 +14,7 @@ chrome.runtime.onMessage.addListener(function (event) {
   main();
 });
 
+let extensionIframe;
 const selectNodeOverlay = document.createElement("div");
 selectNodeOverlay.classList.add("tinking-select-overlay");
 const overlayContent = document.createElement("div");
@@ -90,6 +91,7 @@ function main() {
         iframeDoc.write(reactHTML);
         iframeDoc.close();
         dragElement(document.getElementById("tinking-extension-window"));
+        extensionIframe = iframe;
         document.body.prepend(selectNodeOverlay);
       })
       .catch((error) => {
@@ -106,15 +108,17 @@ async function onDidReceiveMessage(event) {
   if (!event.data.type) {
     return;
   }
-  const iframe = document.getElementById("tinking-extension-iframe");
   switch (event.data.type) {
     case "APP_LOADED": {
       chrome.storage.sync.get(["steps"], function (data) {
         if (Object.keys(data).length === 0) {
-          iframe.contentWindow.postMessage({ type: "LOAD_STEPS" }, "*");
+          extensionIframe.contentWindow.postMessage(
+            { type: "LOAD_STEPS" },
+            "*"
+          );
           return;
         }
-        iframe.contentWindow.postMessage(
+        extensionIframe.contentWindow.postMessage(
           { type: "LOAD_STEPS", steps: data.steps },
           "*"
         );
@@ -142,7 +146,7 @@ async function onDidReceiveMessage(event) {
         ];
         if (elem.classList?.contains(MOUSE_VISITED_CLASSNAME))
           elem.classList.remove(MOUSE_VISITED_CLASSNAME);
-        iframe.contentWindow.postMessage(
+        extensionIframe.contentWindow.postMessage(
           {
             type: "SELECT_NODE",
             command: "findUniqueSelector",
@@ -152,6 +156,15 @@ async function onDidReceiveMessage(event) {
           },
           "*"
         );
+      }
+      break;
+    }
+    case "RECORD_CLICKS_KEYS": {
+      if (event.data.command === "start") {
+        startClicksKeysRecording(event.data.stepIndex);
+      }
+      if (event.data.command === "stop") {
+        stopClicksKeysRecording();
       }
       break;
     }
@@ -243,6 +256,7 @@ const startSelectNode = (stepIndex, type, optionIndex) => {
 };
 
 const stopSelectNode = (stepIndex) => {
+  selectNodeOverlay.style.display = "none";
   if (tippyOnlyThisButton) {
     tippyOnlyThisButton.destroy();
   }
@@ -251,6 +265,57 @@ const stopSelectNode = (stepIndex) => {
   });
   document.removeEventListener("mousemove", onMouseMove, true);
   document.removeEventListener("click", handlers[stepIndex], true);
+};
+
+const onRecordClick = function (stepIndex) {
+  return function event(e) {
+    extensionIframe.contentWindow.postMessage(
+      {
+        type: "RECORD_CLICKS_KEYS",
+        command: "update",
+        stepIndex,
+        selector: finder.finder(e.target),
+      },
+      "*"
+    );
+  };
+};
+const onRecordKeyup = function (stepIndex) {
+  return function event(e) {
+    extensionIframe.contentWindow.postMessage(
+      {
+        type: "RECORD_CLICKS_KEYS",
+        command: "update",
+        stepIndex,
+        input: e.key,
+      },
+      "*"
+    );
+  };
+};
+const startClicksKeysRecording = (stepIndex) => {
+  overlayContent.innerHTML = "👇 Click and type what you want";
+  selectNodeOverlay.style.display = "flex";
+  document.addEventListener("mousemove", () => {
+    selectNodeOverlay.style.display = "none";
+  });
+  document.addEventListener(
+    "click",
+    (handlers["record-click"] = onRecordClick(stepIndex))
+  );
+  document.addEventListener(
+    "keyup",
+    (handlers["record-key"] = onRecordKeyup(stepIndex))
+  );
+};
+
+const stopClicksKeysRecording = () => {
+  selectNodeOverlay.style.display = "none";
+  document.removeEventListener("mousemove", () => {
+    selectNodeOverlay.style.display = "none";
+  });
+  document.removeEventListener("click", handlers["record-click"]);
+  document.removeEventListener("keyup", handlers["record-key"]);
 };
 
 const onMouseMove = (e) => {
@@ -370,8 +435,7 @@ const onClick = (
         content = selectedNodes[0].textContent;
       }
     }
-    const iframe = document.getElementById("tinking-extension-iframe");
-    iframe.contentWindow.postMessage(
+    extensionIframe.contentWindow.postMessage(
       {
         type: "SELECT_NODE",
         command: "update",
@@ -402,7 +466,6 @@ const onClick = (
         e.preventDefault();
         e.stopImmediatePropagation();
         tippyOnlyThisButton.destroy();
-        const iframe = document.getElementById("tinking-extension-iframe");
         let content = clicked.textContent;
         switch (type) {
           case "a": {
@@ -415,7 +478,7 @@ const onClick = (
           }
         }
         if (stepIndex !== undefined) {
-          iframe.contentWindow.postMessage(
+          extensionIframe.contentWindow.postMessage(
             {
               type: "SELECT_NODE",
               command: "update",

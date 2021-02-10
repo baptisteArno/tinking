@@ -20,6 +20,10 @@ import { Step, StepAction, TagType } from "./types";
 import { generateScript } from "./lib/scriptGenerator";
 import { v4 as uuidv4 } from "uuid";
 import { StepItem } from "./StepItem/StepItem";
+import {
+  stopNodeSelection,
+  stopRecordingClicksKeys,
+} from "./service/helperFunctions";
 
 export const App = (): JSX.Element => {
   const [copied, setCopied] = useState(false);
@@ -104,6 +108,12 @@ export const App = (): JSX.Element => {
   };
 
   const handleDeleteStep = (idx: number) => {
+    const stepToDelete = steps[idx];
+    if (stepToDelete.recordedClicksAndKeys) {
+      stopRecordingClicksKeys(idx);
+    } else {
+      stopNodeSelection(idx);
+    }
     steps.splice(idx, 1);
     setSteps([...steps]);
   };

@@ -9,6 +9,7 @@ export enum StepAction {
   EXTRACT_TEXT = "Extract text",
   EXTRACT_HREF = "Extract link",
   EXTRACT_IMAGE_SRC = "Extract image URL",
+  RECORD_CLICKS_KEYS = "Record clicks and keys",
 }
 
 export enum OptionType {
@@ -27,6 +28,12 @@ export type OptionWithValue = {
 
 export type StepOption = SimpleOption | OptionWithValue | undefined;
 
+export type MouseClick = {
+  selector: string;
+};
+export type KeyInput = {
+  input: string;
+};
 export interface Step {
   id: string;
   action?: StepAction;
@@ -37,6 +44,7 @@ export interface Step {
   tagType?: TagType;
   variableName?: string;
   content?: string | null;
+  recordedClicksAndKeys?: (MouseClick | KeyInput)[];
 }
 
 export interface ScrappedStep {

@@ -1,6 +1,13 @@
 import prettier from "prettier/standalone";
 import babelParser from "prettier/parser-babel";
-import { OptionType, OptionWithValue, Step, StepAction } from "../types";
+import {
+  KeyInput,
+  MouseClick,
+  OptionType,
+  OptionWithValue,
+  Step,
+  StepAction,
+} from "../types";
 import { isAnExtractionAction } from "../service/helperFunctions";
 
 const utils = {
@@ -12,6 +19,7 @@ export const generateScript = (
   steps: Step[],
   library: "puppeteer" | "playwright"
 ): string => {
+  let hasData = false;
   let indexInLoop: number | undefined;
   let commands = steps
     .map((step: Step, idx: number) => {
@@ -35,11 +43,12 @@ export const generateScript = (
         return parseLoopFromStep(step);
       }
       return parseSingleCommandFromStep(step, idx, {
-        waitForSelector: indexInLoop === idx,
+        waitForSelector: true,
       });
     })
     .join(" ");
   if (indexInLoop !== undefined) {
+    hasData = true;
     const stepsInLoop = steps.filter(
       (_, idx) => indexInLoop && idx >= indexInLoop
     );
@@ -78,9 +87,10 @@ export const generateScript = (
   if (indexInLoop === undefined) {
     const object = `{${steps
       .map((step, idx) => {
-        if (idx === 0) {
+        if (idx === 0 || step.action === StepAction.RECORD_CLICKS_KEYS) {
           return "";
         }
+        hasData = true;
         const variableName =
           step.variableName && step.variableName !== ""
             ? step.variableName
@@ -94,12 +104,15 @@ export const generateScript = (
         return field + ",";
       })
       .join("")}}`;
-    commands += `
-    console.log(${object})
-    data = ${object}
-    `;
+    if (hasData) {
+      commands += `
+        console.log(${object});
+        data = ${object}
+      `;
+    }
   }
-  commands += ` fs.writeFile(outputFilename ?? \`./\${new Date()}.json\`,
+  if (hasData) {
+    commands += ` fs.writeFile(outputFilename ?? \`./\${new Date()}.json\`,
     prettier.format(JSON.stringify(data), {
       parser: 'json',
     }),
@@ -107,6 +120,7 @@ export const generateScript = (
       if (err) return console.log(err);
     }
   );`;
+  }
 
   const script = `
   ${
@@ -127,7 +141,6 @@ export const generateScript = (
       const page = await browser.newPage();
       await page.setDefaultNavigationTimeout(0); 
       await page.goto("${steps[0].content}");
-      await page.waitForSelector("${steps[1].selector}")
       ${utils.infiniteScroll ? `await autoScroll(page)` : ``}
       ${commands}
       await browser.close();
@@ -154,7 +167,7 @@ const parseSingleCommandFromStep = (
       ? step.variableName
       : "variable" + idx;
   let command = "";
-  if (waitForSelector) {
+  if (waitForSelector && step.action !== StepAction.RECORD_CLICKS_KEYS) {
     command += `
     try {
       await page.waitForSelector("${step.selector}")
@@ -226,6 +239,12 @@ const parseSingleCommandFromStep = (
         variableName.charAt(0).toUpperCase() + variableName.slice(1)
       } = ${variableName}
       `;
+      break;
+    }
+    case StepAction.RECORD_CLICKS_KEYS: {
+      if (!step.recordedClicksAndKeys) return;
+      command += `${parseRecordingCommands(step.recordedClicksAndKeys)}`;
+      break;
     }
   }
   if (regexOption) {
@@ -367,4 +386,19 @@ const parseLibrarySettings = (library: "puppeteer" | "playwright") => {
     // Uncomment this line to open the browser 👇
     // headless: false
   });`;
+};
+
+const parseRecordingCommands = (recording: (KeyInput | MouseClick)[]) => {
+  let commands = ``;
+  for (const record of recording) {
+    if ("selector" in record) {
+      commands += `await page.waitForSelector("${record.selector}");
+      await page.click("${record.selector}")
+      `;
+    } else {
+      commands += `await page.keyboard.type('${record.input}', {delay: 100})
+      `;
+    }
+  }
+  return commands;
 };
