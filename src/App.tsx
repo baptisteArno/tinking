@@ -1,4 +1,9 @@
-import { ChevronDownIcon, CloseIcon, SmallAddIcon } from "@chakra-ui/icons";
+import {
+  ChevronDownIcon,
+  CloseIcon,
+  QuestionIcon,
+  SmallAddIcon,
+} from "@chakra-ui/icons";
 import {
   Button,
   ChakraProvider,
@@ -170,14 +175,29 @@ export const App = (): JSX.Element => {
             >
               Reset
             </Button>
-            <IconButton
-              colorScheme="gray"
-              variant="ghost"
-              size="sm"
-              aria-label="Close"
-              onClick={handleCloseClick}
-              icon={<CloseIcon />}
-            />
+            <Flex alignItems="center">
+              <Link
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                colorScheme="gray"
+                variant="ghost"
+                size="sm"
+                href="https://github.com/baptisteArno/tinking/blob/master/help.md"
+                target="_blank"
+                mr={2}
+              >
+                <QuestionIcon />
+              </Link>
+              <IconButton
+                colorScheme="gray"
+                variant="ghost"
+                size="sm"
+                aria-label="Close"
+                onClick={handleCloseClick}
+                icon={<CloseIcon />}
+              />
+            </Flex>
           </Flex>
 
           <Flex

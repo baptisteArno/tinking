@@ -27,7 +27,7 @@ iframe#tinking-extension-iframe {
 
 #tinking-extension-window .handle {
   position: absolute;
-  width: 250px;
+  width: 240px;
   margin-left: 90px;
   height: 60px;
   cursor: grab;
