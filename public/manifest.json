@@ -1,15 +1,15 @@
 {
-  "name": "Tinking",
-  "version": "1.0.0",
+  "name": "Tinking - Scrapping Tool",
+  "version": "0.0.0.2",
   "manifest_version": 2,
-  "description": "Generate a Puppeteer script with clicks",
+  "description": "Extract data from any website without code, just clicks",
   "icons": {
     "512": "logo512.png"
   },
   "browser_action": {
     "default_icon": "logo512.png"
   },
-  "permissions": ["activeTab", "storage", "webNavigation", "*://*/*"],
+  "permissions": ["activeTab", "storage", "webNavigation"],
   "background": {
     "scripts": [
       "background.js",
