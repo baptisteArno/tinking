@@ -10,6 +10,8 @@ A Chrome extension that allows you to create a scraping recipe by directly selec
 
 _This tool is under active development. The code could use some cleanup, and there may be bugs. PRs are very welcome!_
 
+💌 [Receive updates in your inbox](https://tinking.substack.com/subscribe)
+
 👇
 
 # Getting Started
