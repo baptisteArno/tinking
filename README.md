@@ -32,18 +32,18 @@ SSH:
 git clone git@github.com:baptisteArno/tinking.git
 ```
 
-## 2. Install dependencies and build the extension
+## 2. Install dependencies, lint code, and build the extension
 
 Using `yarn`:
 
 ```sh
-yarn && yarn build
+yarn && yarn lint && yarn build
 ```
 
 Or using `npm`:
 
 ```sh
-npm i && npm run build
+npm i && npm runt lint && npm run build
 ```
 
 ## 3. Install the extension in Google Chrome (or any Chromium browser)
