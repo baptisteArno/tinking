@@ -31,10 +31,6 @@ function dragElement(elmnt) {
 
   function dragMouseDown(e) {
     console.log('MOUSE_DOWN');
-    if (nodeSelectingData) {
-      stopSelectNode(nodeSelectingData.stepIndex, false)
-      startSelectNode(nodeSelectingData.stepIndex, nodeSelectingData.type, nodeSelectingData.optionIndex)
-    }
     e.target.classList.add("grabbing");
     e = e || window.event;
     e.preventDefault();
@@ -239,10 +235,8 @@ const onStepIndex = function (stepIndex, type, optionIndex) {
 };
 
 const handlers = [];
-let nodeSelectingData
 
 const startSelectNode = (stepIndex, type, optionIndex) => {
-  nodeSelectingData = {stepIndex, type, optionIndex}
   if (type === "link") {
     overlayContent.innerHTML = "👇 Click on the link you wish to extract";
   } else if (type === "image") {
@@ -262,10 +256,7 @@ const startSelectNode = (stepIndex, type, optionIndex) => {
   );
 };
 
-const stopSelectNode = (stepIndex, clearNodeSelectingData = true) => {
-  if (clearNodeSelectingData) {
-    nodeSelectingData = null
-  }
+const stopSelectNode = (stepIndex) => {
   selectNodeOverlay.style.display = "none";
   if (tippyOnlyThisButton) {
     tippyOnlyThisButton.destroy();
@@ -460,6 +451,9 @@ const onClick = (
     );
   }
   if (selectedNodes.length > 1) {
+    if (tippyOnlyThisButton) {
+      tippyOnlyThisButton.destroy()
+    }
     tippyOnlyThisButton = tippy(clicked, {
       allowHTML: true,
       content: `<button class="tinking-zoom-btn" id="tinking-onlythis-btn">
@@ -467,6 +461,7 @@ const onClick = (
         </button>`,
       showOnCreate: true,
       interactive: true,
+      hideOnClick: false,
       trigger: "manual",
     });
     tippyInstance.destroy();
