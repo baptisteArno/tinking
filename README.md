@@ -32,7 +32,7 @@ SSH:
 git clone git@github.com:baptisteArno/tinking.git
 ```
 
-## 2. Install dependencies and build the extension
+## 2. Install dependencies, lint code, and build the extension
 
 Using `yarn`:
 
