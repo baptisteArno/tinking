@@ -37,13 +37,13 @@ git clone git@github.com:baptisteArno/tinking.git
 Using `yarn`:
 
 ```sh
-yarn && yarn lint && yarn build
+yarn && yarn build
 ```
 
 Or using `npm`:
 
 ```sh
-npm i && npm runt lint && npm run build
+npm i && npm run build
 ```
 
 ## 3. Install the extension in Google Chrome (or any Chromium browser)
