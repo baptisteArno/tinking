@@ -30,6 +30,11 @@ function dragElement(elmnt) {
   ).onmousedown = dragMouseDown;
 
   function dragMouseDown(e) {
+    console.log('MOUSE_DOWN');
+    if (nodeSelectingData) {
+      stopSelectNode(nodeSelectingData.stepIndex, false)
+      startSelectNode(nodeSelectingData.stepIndex, nodeSelectingData.type, nodeSelectingData.optionIndex)
+    }
     e.target.classList.add("grabbing");
     e = e || window.event;
     e.preventDefault();
@@ -234,8 +239,10 @@ const onStepIndex = function (stepIndex, type, optionIndex) {
 };
 
 const handlers = [];
+let nodeSelectingData
 
 const startSelectNode = (stepIndex, type, optionIndex) => {
+  nodeSelectingData = {stepIndex, type, optionIndex}
   if (type === "link") {
     overlayContent.innerHTML = "👇 Click on the link you wish to extract";
   } else if (type === "image") {
@@ -255,7 +262,10 @@ const startSelectNode = (stepIndex, type, optionIndex) => {
   );
 };
 
-const stopSelectNode = (stepIndex) => {
+const stopSelectNode = (stepIndex, clearNodeSelectingData = true) => {
+  if (clearNodeSelectingData) {
+    nodeSelectingData = null
+  }
   selectNodeOverlay.style.display = "none";
   if (tippyOnlyThisButton) {
     tippyOnlyThisButton.destroy();
