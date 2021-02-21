@@ -450,6 +450,9 @@ const onClick = (
     );
   }
   if (selectedNodes.length > 1) {
+    if (tippyOnlyThisButton) {
+      tippyOnlyThisButton.destroy();
+    }
     tippyOnlyThisButton = tippy(clicked, {
       allowHTML: true,
       content: `<button class="tinking-zoom-btn" id="tinking-onlythis-btn">
@@ -457,6 +460,7 @@ const onClick = (
         </button>`,
       showOnCreate: true,
       interactive: true,
+      hideOnClick: false,
       trigger: "manual",
     });
     tippyInstance.destroy();
