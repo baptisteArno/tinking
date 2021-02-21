@@ -26,9 +26,12 @@ import { generateScript } from "./lib/scriptGenerator";
 import { v4 as uuidv4 } from "uuid";
 import { StepItem } from "./StepItem/StepItem";
 import {
+  launchNodeSelection,
   stopNodeSelection,
-  stopRecordingClicksKeys,
 } from "./service/helperFunctions";
+import { atom, useAtom } from "jotai";
+
+export const editingStepAtom = atom<number | null>(null);
 
 export const App = (): JSX.Element => {
   const [copied, setCopied] = useState(false);
@@ -46,6 +49,8 @@ export const App = (): JSX.Element => {
     },
   ]);
   const [pointerDragPropery, setPointerDragPropery] = useState("grab");
+  const [editingStepIndex, setEditingStepIndex] = useAtom(editingStepAtom);
+
   const scrollingContainer = useRef<HTMLDivElement>(null);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -77,6 +82,17 @@ export const App = (): JSX.Element => {
     saveSteps([...steps]);
   }, [steps]);
 
+  useEffect(() => {
+    if (editingStepIndex === null) {
+      stopNodeSelection();
+    } else {
+      const step = steps[editingStepIndex];
+      launchNodeSelection(editingStepIndex, step.tagType, {
+        record: step.recordedClicksAndKeys !== undefined,
+      });
+    }
+  }, [editingStepIndex]);
+
   const handleCloseClick = () => {
     parent.postMessage({ type: "WINDOW" }, "*");
   };
@@ -94,6 +110,7 @@ export const App = (): JSX.Element => {
         options: [],
       },
     ]);
+    setEditingStepIndex(null);
   };
 
   const handleAddStep = () => {
@@ -113,14 +130,9 @@ export const App = (): JSX.Element => {
   };
 
   const handleDeleteStep = (idx: number) => {
-    const stepToDelete = steps[idx];
-    if (stepToDelete.recordedClicksAndKeys) {
-      stopRecordingClicksKeys(idx);
-    } else {
-      stopNodeSelection(idx);
-    }
     steps.splice(idx, 1);
     setSteps([...steps]);
+    setEditingStepIndex(null);
   };
 
   const saveSteps = (steps: Step[]) => {

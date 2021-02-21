@@ -7521,6 +7521,13 @@ jest@26.6.0:
     import-local "^3.0.2"
     jest-cli "^26.6.0"
 
+jotai@^0.14.4:
+  version "0.14.4"
+  resolved "https://registry.yarnpkg.com/jotai/-/jotai-0.14.4.tgz#edea77ab2fd0f08c56f2a8b04549b7cb8e0be7c0"
+  integrity sha512-kZ3OZhvlww4rNO/FXiv/hZGOKLbMu6bVtR8TAzi54pQywM27ZmoxbybC0TgAJu+2CVS4HTtx9c06+1PaMyqkvg==
+  dependencies:
+    use-context-selector "1.3.7"
+
 "js-tokens@^3.0.0 || ^4.0.0", js-tokens@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-4.0.0.tgz#19203fb59991df98e3a287050d4647cdeaf32499"
@@ -11886,6 +11893,11 @@ use-callback-ref@^1.2.1, use-callback-ref@^1.2.3:
   version "1.2.5"
   resolved "https://registry.yarnpkg.com/use-callback-ref/-/use-callback-ref-1.2.5.tgz#6115ed242cfbaed5915499c0a9842ca2912f38a5"
   integrity sha512-gN3vgMISAgacF7sqsLPByqoePooY3n2emTH59Ur5d/M8eg4WTWu1xp8i8DHjohftIyEx0S08RiYxbffr4j8Peg==
+
+use-context-selector@1.3.7:
+  version "1.3.7"
+  resolved "https://registry.yarnpkg.com/use-context-selector/-/use-context-selector-1.3.7.tgz#4e59270baa73417dcb0c5c6c124359fd0e8b3aaf"
+  integrity sha512-O94hcN9UDAPTC4Fsm3p6Og5PVlhTEeKqxJX3HuBbVSuevOSPLDZxowFUmx49/fnu9jpgY83Nd3TALJVDRtYzdQ==
 
 use-debounce@^5.1.0:
   version "5.2.0"

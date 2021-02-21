@@ -12,21 +12,18 @@ import {
   Button,
   OrderedList,
 } from "@chakra-ui/react";
+import { useAtom } from "jotai";
 import React, { ChangeEvent, useEffect, useRef } from "react";
 import { useState } from "react";
 import { MdEdit } from "react-icons/md";
+import { editingStepAtom } from "../App";
 import {
   actionIsExpectingSelector,
   findUniqueSelector,
   getSelectorContent,
-  launchNodeSelection,
-  startRecordingClicksKeys,
   parseDefaultAction,
   parseStepFromWebpage,
   parseTagType,
-  parseTagTypeFromAction,
-  stopNodeSelection,
-  stopRecordingClicksKeys,
 } from "../service/helperFunctions";
 import { KeyInput, MouseClick, Step, StepAction, StepOption } from "../types";
 import { OptionItem } from "./OptionItem";
@@ -45,10 +42,10 @@ export const StepItem = ({
   onStepChange,
   onDeleteStep,
 }: StepItemProps): JSX.Element => {
-  const [isEdittingSelector, setIsEdittingSelector] = useState(false);
   const stepRefForEventCallbacks = useRef<Step>(step);
   const [currentStep, setCurrentStep] = useState(step);
   const [formattedContent, setFormattedContent] = useState(step.content);
+  const [editingStepIndex, setEditingStepIndex] = useAtom(editingStepAtom);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleIncomingMessageFromPage = (event: any) => {
@@ -135,7 +132,6 @@ export const StepItem = ({
   }, [currentStep]);
 
   const handleAddOptionClick = () => {
-    stopNodeSelection(stepIndex);
     const options = currentStep.options;
     setCurrentStep({ ...currentStep, options: [...options, undefined] });
   };
@@ -163,12 +159,10 @@ export const StepItem = ({
   const handleActionChange = (action: StepAction) => {
     if (action === StepAction.RECORD_CLICKS_KEYS) {
       setCurrentStep({ ...currentStep, action, recordedClicksAndKeys: [] });
-      startRecordingClicksKeys(stepIndex);
-      setIsEdittingSelector(true);
+      setEditingStepIndex(stepIndex);
     } else if (!currentStep.selector && actionIsExpectingSelector(action)) {
       setCurrentStep({ ...currentStep, action });
-      launchNodeSelection(stepIndex, parseTagTypeFromAction(action));
-      setIsEdittingSelector(true);
+      setEditingStepIndex(stepIndex);
     } else {
       setCurrentStep({
         ...currentStep,
@@ -261,7 +255,7 @@ export const StepItem = ({
         w="full"
         align="start"
       >
-        {!isEdittingSelector ? (
+        {editingStepIndex !== stepIndex ? (
           <VStack align="stretch" flex={1} mr={1}>
             <Flex style={{ gap: 10 }}>
               <Tag height="2rem">{stepIndex + 1}</Tag>
@@ -415,29 +409,17 @@ export const StepItem = ({
               size="sm"
               colorScheme="blue"
               aria-label="Edit"
-              icon={isEdittingSelector ? <CheckIcon /> : <MdEdit />}
+              icon={editingStepIndex === stepIndex ? <CheckIcon /> : <MdEdit />}
               disabled={
-                isEdittingSelector &&
+                editingStepIndex === stepIndex &&
                 !currentStep.totalSelected &&
                 (!currentStep.recordedClicksAndKeys ||
                   currentStep.recordedClicksAndKeys?.length === 0)
               }
               onClick={() => {
-                setIsEdittingSelector(!isEdittingSelector);
-                if (isEdittingSelector) {
-                  if (currentStep.recordedClicksAndKeys) {
-                    stopRecordingClicksKeys(stepIndex);
-                  } else {
-                    stopNodeSelection(stepIndex);
-                  }
-                }
-                if (!isEdittingSelector) {
-                  if (currentStep.recordedClicksAndKeys) {
-                    startRecordingClicksKeys(stepIndex);
-                  } else {
-                    launchNodeSelection(stepIndex, currentStep.tagType);
-                  }
-                }
+                setEditingStepIndex(
+                  editingStepIndex === stepIndex ? null : stepIndex
+                );
               }}
             />
           </VStack>

@@ -85,8 +85,21 @@ export const isAnExtractionAction = (action?: StepAction): boolean =>
 export const launchNodeSelection = (
   stepIndex: number,
   tagType?: TagType | "pagination",
-  params?: { optionIndex?: number }
-): void => {
+  params?: { optionIndex?: number; record?: boolean }
+): void =>
+  params?.record
+    ? startRecordingClicksKeys(stepIndex)
+    : startNodeSelection(stepIndex, tagType, params);
+
+export const stopNodeSelection = (): void => {
+  parent.postMessage({ type: "SELECT_NODE", command: "stop" }, "*");
+};
+
+const startNodeSelection = (
+  stepIndex: number,
+  tagType?: TagType | "pagination",
+  params?: { optionIndex?: number; record?: boolean }
+): void =>
   parent.postMessage(
     {
       type: "SELECT_NODE",
@@ -97,13 +110,7 @@ export const launchNodeSelection = (
     },
     "*"
   );
-};
-
-export const stopNodeSelection = (stepIndex: number): void => {
-  parent.postMessage({ type: "SELECT_NODE", command: "stop", stepIndex }, "*");
-};
-
-export const startRecordingClicksKeys = (stepIndex: number): void =>
+const startRecordingClicksKeys = (stepIndex: number): void =>
   parent.postMessage(
     {
       type: "RECORD_CLICKS_KEYS",

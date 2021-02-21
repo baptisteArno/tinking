@@ -133,7 +133,7 @@ async function onDidReceiveMessage(event) {
           event.data.optionIndex ?? null
         );
       } else if (event.data.command === "stop") {
-        stopSelectNode(event.data.stepIndex);
+        stopSelectNode();
       } else if (event.data.command === "update") {
         onClick(null, event.data.stepIndex, {
           selector: event.data.selector,
@@ -162,9 +162,6 @@ async function onDidReceiveMessage(event) {
     case "RECORD_CLICKS_KEYS": {
       if (event.data.command === "start") {
         startClicksKeysRecording(event.data.stepIndex);
-      }
-      if (event.data.command === "stop") {
-        stopClicksKeysRecording();
       }
       break;
     }
@@ -236,6 +233,7 @@ const onStepIndex = function (stepIndex, type, optionIndex) {
 const handlers = [];
 
 const startSelectNode = (stepIndex, type, optionIndex) => {
+  stopSelectNode();
   if (type === "link") {
     overlayContent.innerHTML = "👇 Click on the link you wish to extract";
   } else if (type === "image") {
@@ -255,7 +253,7 @@ const startSelectNode = (stepIndex, type, optionIndex) => {
   );
 };
 
-const stopSelectNode = (stepIndex) => {
+const stopSelectNode = () => {
   selectNodeOverlay.style.display = "none";
   if (tippyOnlyThisButton) {
     tippyOnlyThisButton.destroy();
@@ -264,7 +262,10 @@ const stopSelectNode = (stepIndex) => {
     node.classList.remove(MOUSE_VISITED_CLASSNAME);
   });
   document.removeEventListener("mousemove", onMouseMove, true);
-  document.removeEventListener("click", handlers[stepIndex], true);
+  for (const handler of handlers) {
+    document.removeEventListener("click", handler, true);
+  }
+  stopClicksKeysRecording();
 };
 
 const onRecordClick = function (stepIndex) {
@@ -294,6 +295,7 @@ const onRecordKeyup = function (stepIndex) {
   };
 };
 const startClicksKeysRecording = (stepIndex) => {
+  stopClicksKeysRecording();
   overlayContent.innerHTML = "👇 Click and type what you want";
   selectNodeOverlay.style.display = "flex";
   document.addEventListener("mousemove", () => {
