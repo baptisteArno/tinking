@@ -30,7 +30,6 @@ function dragElement(elmnt) {
   ).onmousedown = dragMouseDown;
 
   function dragMouseDown(e) {
-    console.log('MOUSE_DOWN');
     e.target.classList.add("grabbing");
     e = e || window.event;
     e.preventDefault();
@@ -452,7 +451,7 @@ const onClick = (
   }
   if (selectedNodes.length > 1) {
     if (tippyOnlyThisButton) {
-      tippyOnlyThisButton.destroy()
+      tippyOnlyThisButton.destroy();
     }
     tippyOnlyThisButton = tippy(clicked, {
       allowHTML: true,
