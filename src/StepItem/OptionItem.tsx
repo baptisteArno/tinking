@@ -56,7 +56,7 @@ export const OptionItem = ({
       const newOption = step.options[event.data.optionIndex] as OptionWithValue;
       newOption.value = event.data.selector;
       onOptionChange(newOption);
-      stopNodeSelection(stepIndex);
+      stopNodeSelection();
     }
   };
 
@@ -87,7 +87,7 @@ export const OptionItem = ({
   };
 
   const handleDeleteOptionClick = () => {
-    if (isSelectingPaginateElement) stopNodeSelection(stepIndex);
+    if (isSelectingPaginateElement) stopNodeSelection();
     onOptionDelete();
   };
 
@@ -95,7 +95,7 @@ export const OptionItem = ({
     e: ChangeEvent<HTMLInputElement>,
     option: OptionWithValue
   ) => {
-    if (isSelectingPaginateElement) stopNodeSelection(stepIndex);
+    if (isSelectingPaginateElement) stopNodeSelection();
     if (!step.options) return;
     option.value = e.target.value;
     onOptionChange(option);
