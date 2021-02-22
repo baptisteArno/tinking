@@ -174,6 +174,15 @@ export const StepItem = ({
     let selector = e.target.value;
     setCurrentStep({ ...currentStep, selector });
     if (selector === "") {
+      setCurrentStep({
+        ...currentStep,
+        totalSelected: 0,
+        tagName: undefined,
+        tagType: undefined,
+        action: undefined,
+        content: undefined,
+        selector: selector,
+      });
       return;
     }
     let nodes;
@@ -245,6 +254,13 @@ export const StepItem = ({
     setCurrentStep({ ...currentStep });
   };
 
+  const isEditingAndIsEmpty =
+    editingStepIndex === stepIndex &&
+    !currentStep.totalSelected &&
+    (!currentStep.recordedClicksAndKeys ||
+      currentStep.recordedClicksAndKeys?.length === 0);
+  const isNotCurrentEditingStep =
+    editingStepIndex !== null && editingStepIndex !== stepIndex;
   return (
     <ListItem display="flex" flexDirection="column">
       <Flex
@@ -256,7 +272,13 @@ export const StepItem = ({
         align="start"
       >
         {editingStepIndex !== stepIndex ? (
-          <VStack align="stretch" flex={1} mr={1}>
+          <VStack
+            align="stretch"
+            flex={1}
+            mr={1}
+            opacity={isNotCurrentEditingStep ? 0.2 : 1}
+            pointerEvents={isNotCurrentEditingStep ? "none" : "auto"}
+          >
             <Flex style={{ gap: 10 }}>
               <Tag height="2rem">{stepIndex + 1}</Tag>
               <SelectAction
@@ -399,6 +421,7 @@ export const StepItem = ({
         {stepIndex > 0 && (
           <VStack>
             <IconButton
+              disabled={isNotCurrentEditingStep}
               size="sm"
               colorScheme="red"
               aria-label="Remove"
@@ -410,12 +433,7 @@ export const StepItem = ({
               colorScheme="blue"
               aria-label="Edit"
               icon={editingStepIndex === stepIndex ? <CheckIcon /> : <MdEdit />}
-              disabled={
-                editingStepIndex === stepIndex &&
-                !currentStep.totalSelected &&
-                (!currentStep.recordedClicksAndKeys ||
-                  currentStep.recordedClicksAndKeys?.length === 0)
-              }
+              disabled={isNotCurrentEditingStep || isEditingAndIsEmpty}
               onClick={() => {
                 setEditingStepIndex(
                   editingStepIndex === stepIndex ? null : stepIndex

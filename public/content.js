@@ -270,6 +270,9 @@ const stopSelectNode = () => {
 
 const onRecordClick = function (stepIndex) {
   return function event(e) {
+    if (e.target.closest("#tinking-extension-window")) {
+      return;
+    }
     extensionIframe.contentWindow.postMessage(
       {
         type: "RECORD_CLICKS_KEYS",
