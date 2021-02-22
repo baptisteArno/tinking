@@ -43,8 +43,6 @@ export const StepItem = ({
   onStepChange,
   onDeleteStep,
 }: StepItemProps): JSX.Element => {
-  console.log(stepIndex, '_activateStep: ', isStepInActionProcess(step));
-
   const stepRefForEventCallbacks = useRef<Step>(step);
   const [currentStep, setCurrentStep] = useState(step);
   const [formattedContent, setFormattedContent] = useState(step.content);
@@ -250,7 +248,6 @@ export const StepItem = ({
 
   useEffect(() => {
     if (isStepInActionProcess(step)) {
-      console.log('step: ', step);
       handleActionChange(step.action!)
     }
   }, [])

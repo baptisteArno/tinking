@@ -57,10 +57,8 @@ export const App = (): JSX.Element => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleIncomingMessageFromPage = (event: any) => {
     if (event.data.type === "LOAD_STEPS") {
-      console.log('loaded steps');
       if (event.data.steps) {
         const newSteps = [...reduceInProcessSteps(event.data.steps)];
-        console.log('LOADED STEPS: ', newSteps);
         setSteps(newSteps);
       }
       setIsLoading(false);
