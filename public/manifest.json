@@ -1,6 +1,6 @@
 {
   "name": "Tinking - Scrapping Tool",
-  "version": "0.0.0.2",
+  "version": "0.0.0.3",
   "manifest_version": 2,
   "description": "Extract data from any website without code, just clicks",
   "icons": {
@@ -9,7 +9,7 @@
   "browser_action": {
     "default_icon": "logo512.png"
   },
-  "permissions": ["activeTab", "storage", "webNavigation"],
+  "permissions": ["storage", "webNavigation"],
   "background": {
     "scripts": [
       "background.js",
