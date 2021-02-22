@@ -24,6 +24,7 @@ import {
   parseDefaultAction,
   parseStepFromWebpage,
   parseTagType,
+  isStepInActionProcess,
 } from "../service/helperFunctions";
 import { KeyInput, MouseClick, Step, StepAction, StepOption } from "../types";
 import { OptionItem } from "./OptionItem";
@@ -42,6 +43,8 @@ export const StepItem = ({
   onStepChange,
   onDeleteStep,
 }: StepItemProps): JSX.Element => {
+  console.log(stepIndex, '_activateStep: ', isStepInActionProcess(step));
+
   const stepRefForEventCallbacks = useRef<Step>(step);
   const [currentStep, setCurrentStep] = useState(step);
   const [formattedContent, setFormattedContent] = useState(step.content);
@@ -244,6 +247,13 @@ export const StepItem = ({
     currentStep.recordedClicksAndKeys.splice(idx, 1);
     setCurrentStep({ ...currentStep });
   };
+
+  useEffect(() => {
+    if (isStepInActionProcess(step)) {
+      console.log('step: ', step);
+      handleActionChange(step.action!)
+    }
+  }, [])
 
   return (
     <ListItem display="flex" flexDirection="column">
