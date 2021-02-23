@@ -110,6 +110,7 @@ const startNodeSelection = (
     },
     "*"
   );
+
 const startRecordingClicksKeys = (stepIndex: number): void =>
   parent.postMessage(
     {

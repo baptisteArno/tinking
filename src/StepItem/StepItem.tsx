@@ -24,6 +24,7 @@ import {
   parseDefaultAction,
   parseStepFromWebpage,
   parseTagType,
+  parseTagTypeFromAction,
 } from "../service/helperFunctions";
 import { KeyInput, MouseClick, Step, StepAction, StepOption } from "../types";
 import { OptionItem } from "./OptionItem";
@@ -161,7 +162,11 @@ export const StepItem = ({
       setCurrentStep({ ...currentStep, action, recordedClicksAndKeys: [] });
       setEditingStepIndex(stepIndex);
     } else if (!currentStep.selector && actionIsExpectingSelector(action)) {
-      setCurrentStep({ ...currentStep, action });
+      setCurrentStep({
+        ...currentStep,
+        action,
+        tagType: parseTagTypeFromAction(action),
+      });
       setEditingStepIndex(stepIndex);
     } else {
       setCurrentStep({
@@ -322,8 +327,8 @@ export const StepItem = ({
                 {currentStep.options.map((_, idx) => (
                   <OptionItem
                     key={idx}
-                    step={currentStep}
                     stepIndex={stepIndex}
+                    step={currentStep}
                     optionIndex={idx}
                     onOptionChange={(option, newContent) =>
                       handleOptionChange(option, idx, newContent)
@@ -443,14 +448,6 @@ export const StepItem = ({
           </VStack>
         )}
       </Flex>
-      {currentStep.totalSelected !== undefined &&
-        currentStep.totalSelected > 1 &&
-        currentStep.action === StepAction.NAVIGATE && (
-          <Text mt={1}>
-            For each link:
-            <br />
-          </Text>
-        )}
     </ListItem>
   );
 };
