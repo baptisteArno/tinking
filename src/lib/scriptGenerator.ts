@@ -269,6 +269,7 @@ const parseLoopFromStep = (step: Step) => {
   let urlsExtractionCommand;
   if (paginationOption) {
     urlsExtractionCommand = `
+      await page.waitForSelector("${step.selector}")
       let urls = []
       urls = await page.evaluate(() => {
         return [...document.querySelectorAll("${step.selector}")].map((node) => node.href);
@@ -285,15 +286,9 @@ const parseLoopFromStep = (step: Step) => {
       while(i <= 1000){
         paginationBar.tick()
         i += 1
-        const nextPageUrl = await page.evaluate(() => {
-          const elements = [
-            ...document.querySelectorAll(
-              '${paginationOption?.value}'
-            ),
-          ];
-          return elements.pop()?.href ?? null;
-        });
-        await page.goto(nextPageUrl);
+        const nodes = await page.$$("${paginationOption?.value}");
+        await nodes.pop().click();
+        await page.waitForTimeout(4000);
         try{
           await page.waitForSelector("${step.selector}")
         }catch{

@@ -68,7 +68,6 @@ function main() {
     return;
   }
   const extensionOrigin = "chrome-extension://" + chrome.runtime.id;
-  // eslint-disable-next-line no-restricted-globals
   if (!location.ancestorOrigins.contains(extensionOrigin)) {
     fetch(chrome.runtime.getURL("index.html"))
       .then((response) => response.text())
@@ -218,21 +217,27 @@ let prevQuerySelector;
 let tippyInstance;
 let tippyOnlyThisButton;
 
-const onStepIndex = function (stepIndex, type, optionIndex) {
+const onStepIndex = function (stepIndex, { type, extractUnique, optionIndex }) {
   return function actualOnClick(event) {
     let tag;
-    if (type === "link" || type === "pagination") {
+    if (type === "link") {
       tag = "a";
     } else if (type === "image") {
       tag = "img";
     }
-    onClick(event, stepIndex, { type: tag, optionIndex });
+    onClick(event, stepIndex, { type: tag, extractUnique, optionIndex });
   };
 };
 
-const handlers = [];
+let handlers = [];
 
 const startSelectNode = (stepIndex, type, optionIndex) => {
+  console.log(
+    "🚀 ~ file: content.js ~ line 235 ~ startSelectNode ~ stepIndex, type, optionIndex",
+    stepIndex,
+    type,
+    optionIndex
+  );
   stopSelectNode();
   if (type === "link") {
     overlayContent.innerHTML = "👇 Click on the link you wish to extract";
@@ -245,15 +250,21 @@ const startSelectNode = (stepIndex, type, optionIndex) => {
     overlayContent.innerHTML = "👇 Click on the element you wish to extract";
   }
   selectNodeOverlay.style.display = "flex";
+
   document.addEventListener("mousemove", onMouseMove, { capture: true });
   document.addEventListener(
     "click",
-    (handlers[stepIndex] = onStepIndex(stepIndex, type, optionIndex)),
+    (handlers[stepIndex] = onStepIndex(stepIndex, {
+      type,
+      extractUnique: type === "pagination",
+      optionIndex,
+    })),
     { capture: true }
   );
 };
 
 const stopSelectNode = () => {
+  console.log(handlers);
   selectNodeOverlay.style.display = "none";
   if (tippyOnlyThisButton) {
     tippyOnlyThisButton.destroy();
@@ -261,10 +272,12 @@ const stopSelectNode = () => {
   document.querySelectorAll(`.${MOUSE_VISITED_CLASSNAME}`).forEach((node) => {
     node.classList.remove(MOUSE_VISITED_CLASSNAME);
   });
-  document.removeEventListener("mousemove", onMouseMove, true);
+  document.removeEventListener("mousemove", onMouseMove, { capture: true });
   for (const handler of handlers) {
-    document.removeEventListener("click", handler, true);
+    console.log("remove", handler);
+    document.removeEventListener("click", handler, { capture: true });
   }
+  handlers = [];
   stopClicksKeysRecording();
 };
 
@@ -382,7 +395,7 @@ const tryToFindImage = (node) => findClosest("img", node);
 const onClick = (
   e,
   stepIndex,
-  { type, selector, elementIndex, optionIndex }
+  { type, selector, elementIndex, optionIndex, extractUnique }
 ) => {
   let clicked;
   if (selector && elementIndex !== undefined) {
@@ -404,7 +417,7 @@ const onClick = (
     e.stopImmediatePropagation();
   }
 
-  let selectedNodes = document.querySelectorAll(`.${MOUSE_VISITED_CLASSNAME}`);
+  let querySelector = `.${MOUSE_VISITED_CLASSNAME}`;
   if (type && clicked.tagName.toLowerCase() !== type) {
     switch (type) {
       case "a": {
@@ -416,15 +429,16 @@ const onClick = (
         break;
       }
     }
-    selectedNodes = document.querySelectorAll(
-      getQuerySelectorWithThirdParents(clicked)
-    );
+    querySelector = getQuerySelectorWithThirdParents(clicked);
   }
+  querySelector = extractUnique ? finder.finder(clicked) : querySelector;
+  selectedNodes = document.querySelectorAll(querySelector);
 
   if (e) {
-    let selector = getQuerySelectorWithThirdParents(clicked);
-    if (selector.endsWith(MOUSE_VISITED_CLASSNAME)) {
-      selector = selector.split(`.${MOUSE_VISITED_CLASSNAME}`)[0];
+    if (querySelector.endsWith(MOUSE_VISITED_CLASSNAME)) {
+      querySelector = querySelector
+        .split(` .${MOUSE_VISITED_CLASSNAME}`)[0]
+        .replace(" >", "");
     }
     let content;
     switch (type) {
@@ -444,7 +458,7 @@ const onClick = (
       {
         type: "SELECT_NODE",
         command: "update",
-        selector,
+        selector: querySelector,
         total: selectedNodes.length,
         content,
         tagName: clicked.tagName.toLowerCase(),
