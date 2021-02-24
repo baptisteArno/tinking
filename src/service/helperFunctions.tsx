@@ -149,13 +149,16 @@ export const findUniqueSelector = (
 };
 
 export const isStepInActionProcess = (step: Step): boolean => {
-  if (step.action === StepAction.RECORD_CLICKS_KEYS) {
-    if (step.recordedClicksAndKeys) {
-      return !step.recordedClicksAndKeys.length && true;
-    } else {
-      return false;
+  switch (step.action) {
+    case StepAction.RECORD_CLICKS_KEYS: {
+      if (step.recordedClicksAndKeys) {
+        return !step.recordedClicksAndKeys.length && true;
+      } else {
+        return false;
+      }
     }
-  } else {
-    return !step.tagName && true;
+    default: {
+      return !step.tagName && true;
+    }
   }
 };

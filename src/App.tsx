@@ -28,7 +28,6 @@ import { StepItem } from "./StepItem/StepItem";
 import {
   launchNodeSelection,
   stopNodeSelection,
-  reduceInProcessSteps,
 } from "./service/helperFunctions";
 import { atom, useAtom } from "jotai";
 
@@ -58,7 +57,7 @@ export const App = (): JSX.Element => {
   const handleIncomingMessageFromPage = (event: any) => {
     if (event.data.type === "LOAD_STEPS") {
       if (event.data.steps) {
-        const newSteps = [...reduceInProcessSteps(event.data.steps)];
+        const newSteps = [...event.data.steps]
         setSteps(newSteps);
       }
       setIsLoading(false);

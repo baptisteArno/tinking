@@ -261,10 +261,10 @@ export const StepItem = ({
   };
 
   useEffect(() => {
-    if (isStepInActionProcess(step)) {
-      handleActionChange(step.action!)
+    if (step.action && isStepInActionProcess(step)) {
+      handleActionChange(step.action);
     }
-  }, [])
+  }, []);
 
   const isEditingAndIsEmpty =
     editingStepIndex === stepIndex &&
@@ -273,7 +273,7 @@ export const StepItem = ({
       currentStep.recordedClicksAndKeys?.length === 0);
   const isNotCurrentEditingStep =
     editingStepIndex !== null && editingStepIndex !== stepIndex;
-  
+
   return (
     <ListItem display="flex" flexDirection="column">
       <Flex
