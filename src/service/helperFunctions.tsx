@@ -110,6 +110,7 @@ const startNodeSelection = (
     },
     "*"
   );
+
 const startRecordingClicksKeys = (stepIndex: number): void =>
   parent.postMessage(
     {
@@ -148,39 +149,9 @@ export const findUniqueSelector = (
 };
 
 export const isStepInActionProcess = (step: Step): boolean => {
-  if (
-    (step.action === StepAction.RECORD_CLICKS_KEYS && !step.recordedClicksAndKeys!.length) ||
-    (step.action !== StepAction.RECORD_CLICKS_KEYS && !step.tagName)
-  ) {
-    return true
+  if (step.action === StepAction.RECORD_CLICKS_KEYS) {
+    return !step.recordedClicksAndKeys!.length && true
   } else {
-    return false
-  }
-}
-
-export const reduceInProcessSteps = (steps: Step[]): Step[] => {
-  const reducedSteps = []
-  let canHaveMoreProcessSteps = true
-  for (const step of steps) {
-    if (isStepInActionProcess(step)) {
-      if (canHaveMoreProcessSteps) {
-        reducedSteps.push(step)
-        canHaveMoreProcessSteps = false
-      }
-    } else {
-      reducedSteps.push(step)
-    }
-  }
-
-  return reducedSteps
-}
-
-// for future use
-export const stepAlreadyInProcess = (steps: Step[]): boolean => {
-  const inProcessSteps = steps.filter(step => isStepInActionProcess(step))
-  if (inProcessSteps.length) {
-    return true
-  } else {
-    return false
+    return !step.tagName && true
   }
 }

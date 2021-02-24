@@ -24,7 +24,11 @@ import {
   parseDefaultAction,
   parseStepFromWebpage,
   parseTagType,
+<<<<<<< HEAD
   isStepInActionProcess,
+=======
+  parseTagTypeFromAction,
+>>>>>>> 39ea49ae4f0ff7a07face7df1bc6b58edd6b3a9f
 } from "../service/helperFunctions";
 import { KeyInput, MouseClick, Step, StepAction, StepOption } from "../types";
 import { OptionItem } from "./OptionItem";
@@ -162,7 +166,11 @@ export const StepItem = ({
       setCurrentStep({ ...currentStep, action, recordedClicksAndKeys: [] });
       setEditingStepIndex(stepIndex);
     } else if (!currentStep.selector && actionIsExpectingSelector(action)) {
-      setCurrentStep({ ...currentStep, action });
+      setCurrentStep({
+        ...currentStep,
+        action,
+        tagType: parseTagTypeFromAction(action),
+      });
       setEditingStepIndex(stepIndex);
     } else {
       setCurrentStep({
@@ -175,6 +183,15 @@ export const StepItem = ({
     let selector = e.target.value;
     setCurrentStep({ ...currentStep, selector });
     if (selector === "") {
+      setCurrentStep({
+        ...currentStep,
+        totalSelected: 0,
+        tagName: undefined,
+        tagType: undefined,
+        action: undefined,
+        content: undefined,
+        selector: selector,
+      });
       return;
     }
     let nodes;
@@ -252,6 +269,14 @@ export const StepItem = ({
     }
   }, [])
 
+  const isEditingAndIsEmpty =
+    editingStepIndex === stepIndex &&
+    !currentStep.totalSelected &&
+    (!currentStep.recordedClicksAndKeys ||
+      currentStep.recordedClicksAndKeys?.length === 0);
+  const isNotCurrentEditingStep =
+    editingStepIndex !== null && editingStepIndex !== stepIndex;
+  
   return (
     <ListItem display="flex" flexDirection="column">
       <Flex
@@ -263,7 +288,13 @@ export const StepItem = ({
         align="start"
       >
         {editingStepIndex !== stepIndex ? (
-          <VStack align="stretch" flex={1} mr={1}>
+          <VStack
+            align="stretch"
+            flex={1}
+            mr={1}
+            opacity={isNotCurrentEditingStep ? 0.2 : 1}
+            pointerEvents={isNotCurrentEditingStep ? "none" : "auto"}
+          >
             <Flex style={{ gap: 10 }}>
               <Tag height="2rem">{stepIndex + 1}</Tag>
               <SelectAction
@@ -307,8 +338,8 @@ export const StepItem = ({
                 {currentStep.options.map((_, idx) => (
                   <OptionItem
                     key={idx}
-                    step={currentStep}
                     stepIndex={stepIndex}
+                    step={currentStep}
                     optionIndex={idx}
                     onOptionChange={(option, newContent) =>
                       handleOptionChange(option, idx, newContent)
@@ -406,6 +437,7 @@ export const StepItem = ({
         {stepIndex > 0 && (
           <VStack>
             <IconButton
+              disabled={isNotCurrentEditingStep}
               size="sm"
               colorScheme="red"
               aria-label="Remove"
@@ -417,12 +449,7 @@ export const StepItem = ({
               colorScheme="blue"
               aria-label="Edit"
               icon={editingStepIndex === stepIndex ? <CheckIcon /> : <MdEdit />}
-              disabled={
-                editingStepIndex === stepIndex &&
-                !currentStep.totalSelected &&
-                (!currentStep.recordedClicksAndKeys ||
-                  currentStep.recordedClicksAndKeys?.length === 0)
-              }
+              disabled={isNotCurrentEditingStep || isEditingAndIsEmpty}
               onClick={() => {
                 setEditingStepIndex(
                   editingStepIndex === stepIndex ? null : stepIndex
@@ -432,14 +459,6 @@ export const StepItem = ({
           </VStack>
         )}
       </Flex>
-      {currentStep.totalSelected !== undefined &&
-        currentStep.totalSelected > 1 &&
-        currentStep.action === StepAction.NAVIGATE && (
-          <Text mt={1}>
-            For each link:
-            <br />
-          </Text>
-        )}
     </ListItem>
   );
 };

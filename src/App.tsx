@@ -237,6 +237,7 @@ export const App = (): JSX.Element => {
                     />
                   ))}
                   <Button
+                    disabled={editingStepIndex === steps.length - 1}
                     colorScheme="teal"
                     onClick={handleAddStep}
                     leftIcon={<SmallAddIcon />}
@@ -256,7 +257,7 @@ export const App = (): JSX.Element => {
                       my={4}
                       minHeight="2.5rem"
                     >
-                      Generate code
+                      ⚙️ Generate code
                     </MenuButton>
                     <MenuList>
                       <MenuItem
