@@ -29,7 +29,7 @@ export const generateScript = (
       if (
         (step.options?.findIndex(
           (option) => option?.type === OptionType.INFINITE_SCROLL
-        ) ?? -1) !== -1
+        ) || -1) !== -1
       ) {
         utils.infiniteScroll = true;
       }
@@ -112,7 +112,7 @@ export const generateScript = (
     }
   }
   if (hasData) {
-    commands += ` fs.writeFile(outputFilename ?? \`./\${new Date()}.json\`,
+    commands += ` fs.writeFile(outputFilename || \`./\${new Date()}.json\`,
     prettier.format(JSON.stringify(data), {
       parser: 'json',
     }),
@@ -184,7 +184,7 @@ const parseSingleCommandFromStep = (
       command += `
       let url = await page.evaluate(() => {
         const element = document.querySelector("${step.selector}")
-        return element?.href ?? null;
+        return element.href || null;
       });
       await page.goto(url)
       `;
@@ -195,12 +195,12 @@ const parseSingleCommandFromStep = (
         command += `
         const ${variableName} = await page.evaluate(() => {
           const elements = document.querySelectorAll("${step.selector}")
-          return [...elements].map(element => element.textContent ?? null);
+          return [...elements].map(element => element.textContent || null);
         });`;
       } else {
         command += `const ${variableName} = await page.evaluate(() => {
           const element = document.querySelector("${step.selector}")
-          return element?.textContent;
+          return element.textContent;
         });
         let formatted${
           variableName.charAt(0).toUpperCase() + variableName.slice(1)
@@ -214,13 +214,13 @@ const parseSingleCommandFromStep = (
         command += `
         const ${variableName} = await page.evaluate(() => {
           const elements = document.querySelectorAll("${step.selector}")
-          return [...elements].map(element => element.src ?? null);
+          return [...elements].map(element => element.src || null);
         });`;
       } else {
         command += `
         const ${variableName} = await page.evaluate(() => {
           const element = document.querySelector("${step.selector}")
-          return element?.src ?? null;
+          return element.src || null;
         });
         let formatted${
           variableName.charAt(0).toUpperCase() + variableName.slice(1)
@@ -233,7 +233,7 @@ const parseSingleCommandFromStep = (
       command += `
       const ${variableName} = await page.evaluate(() => {
         const element = document.querySelector("${step.selector}")
-        return element?.href ?? null;
+        return element.href || null;
       });
       let formatted${
         variableName.charAt(0).toUpperCase() + variableName.slice(1)
