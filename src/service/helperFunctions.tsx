@@ -150,8 +150,8 @@ export const findUniqueSelector = (
 
 export const isStepInActionProcess = (step: Step): boolean => {
   if (step.action === StepAction.RECORD_CLICKS_KEYS) {
-    return !step.recordedClicksAndKeys!.length && true
+    return !step.recordedClicksAndKeys!.length && true;
   } else {
-    return !step.tagName && true
+    return !step.tagName && true;
   }
-}
+};
