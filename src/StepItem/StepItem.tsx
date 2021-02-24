@@ -24,11 +24,8 @@ import {
   parseDefaultAction,
   parseStepFromWebpage,
   parseTagType,
-<<<<<<< HEAD
   isStepInActionProcess,
-=======
   parseTagTypeFromAction,
->>>>>>> 39ea49ae4f0ff7a07face7df1bc6b58edd6b3a9f
 } from "../service/helperFunctions";
 import { KeyInput, MouseClick, Step, StepAction, StepOption } from "../types";
 import { OptionItem } from "./OptionItem";
