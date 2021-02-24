@@ -230,15 +230,23 @@ const parseSingleCommandFromStep = (
       break;
     }
     case StepAction.EXTRACT_HREF: {
-      command += `
-      const ${variableName} = await page.evaluate(() => {
-        const element = document.querySelector("${step.selector}")
-        return element.href || null;
-      });
-      let formatted${
-        variableName.charAt(0).toUpperCase() + variableName.slice(1)
-      } = ${variableName}
-      `;
+      if (step.totalSelected && step.totalSelected > 1) {
+        command += `
+        const ${variableName} = await page.evaluate(() => {
+          const elements = document.querySelectorAll("${step.selector}")
+          return [...elements].map(element => element.href || null);
+        });`;
+      } else {
+        command += `
+        const ${variableName} = await page.evaluate(() => {
+          const element = document.querySelector("${step.selector}")
+          return element.href || null;
+        });
+        let formatted${
+          variableName.charAt(0).toUpperCase() + variableName.slice(1)
+        } = ${variableName}
+        `;
+      }
       break;
     }
     case StepAction.RECORD_CLICKS_KEYS: {
