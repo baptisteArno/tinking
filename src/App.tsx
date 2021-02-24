@@ -57,7 +57,7 @@ export const App = (): JSX.Element => {
   const handleIncomingMessageFromPage = (event: any) => {
     if (event.data.type === "LOAD_STEPS") {
       if (event.data.steps) {
-        const newSteps = [...event.data.steps]
+        const newSteps = [...event.data.steps];
         setSteps(newSteps);
       }
       setIsLoading(false);
