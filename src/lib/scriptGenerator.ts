@@ -191,11 +191,12 @@ const parseSingleCommandFromStep = (
       break;
     }
     case StepAction.EXTRACT_TEXT: {
+      const amtToScrapeLimitCode = sliceByAmtToScrape(step);
       if (step.totalSelected && step.totalSelected > 1) {
         command += `
         const ${variableName} = await page.evaluate(() => {
           const elements = document.querySelectorAll("${step.selector}")
-          return [...elements].map(element => element.textContent ?? null);
+          return [...elements].map(element => element.textContent ?? null)${amtToScrapeLimitCode};
         });`;
       } else {
         command += `const ${variableName} = await page.evaluate(() => {
@@ -210,11 +211,12 @@ const parseSingleCommandFromStep = (
       break;
     }
     case StepAction.EXTRACT_IMAGE_SRC: {
+      const amtToScrapeLimitCode = sliceByAmtToScrape(step);
       if (step.totalSelected && step.totalSelected > 1) {
         command += `
         const ${variableName} = await page.evaluate(() => {
           const elements = document.querySelectorAll("${step.selector}")
-          return [...elements].map(element => element.src ?? null);
+          return [...elements].map(element => element.src ?? null)${amtToScrapeLimitCode};
         });`;
       } else {
         command += `
@@ -261,10 +263,20 @@ const parseSingleCommandFromStep = (
   return command;
 };
 
+const sliceByAmtToScrape = (step: Step) => {
+  if (step.amountToScrape && step.amountToScrape > 0) {
+    return `.slice(0,${step.amountToScrape})`;
+  } else {
+    return "";
+  }
+};
+
 const parseLoopFromStep = (step: Step) => {
   const paginationOption = step.options?.find(
     (option) => option?.type === OptionType.PAGINATION
   ) as OptionWithValue | undefined;
+
+  const amtToScrape = sliceByAmtToScrape(step);
 
   let urlsExtractionCommand;
   if (paginationOption) {
@@ -272,7 +284,7 @@ const parseLoopFromStep = (step: Step) => {
       await page.waitForSelector("${step.selector}")
       let urls = []
       urls = await page.evaluate(() => {
-        return [...document.querySelectorAll("${step.selector}")].map((node) => node.href);
+        return [...document.querySelectorAll("${step.selector}")].map((node) => node.href)${amtToScrape};
       });
       let i = 0
       // 1000 pages max
@@ -296,7 +308,10 @@ const parseLoopFromStep = (step: Step) => {
         }
         urls = urls.concat(await page.evaluate(() => {
           return [...document.querySelectorAll("${step.selector}")].map(node => node.href);
-        }))
+        }))${amtToScrape}
+        if (urls.length >= ${step.amountToScrape}) {
+          break;
+        }
       }
     `;
   } else {

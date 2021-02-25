@@ -40,6 +40,7 @@ export interface Step {
   options: StepOption[];
   selector?: string;
   totalSelected?: number;
+  amountToScrape?: number;
   tagName?: string;
   tagType?: TagType;
   variableName?: string;
@@ -53,4 +54,9 @@ export interface ScrappedStep {
   tagName: string;
   tagType: TagType;
   content: string;
+}
+
+export enum AmountOption {
+  ALL = "All",
+  CUSTOM = "Custom amount",
 }

@@ -61,6 +61,7 @@ export const parseStepFromWebpage = (
   return {
     selector: data.selector,
     totalSelected: data.total,
+    amountToScrape: -1,
     tagName: data.tagName,
     tagType: parseTagType(data.tagName),
     content: data.content,
