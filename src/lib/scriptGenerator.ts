@@ -29,7 +29,7 @@ export const generateScript = (
       if (
         (step.options?.findIndex(
           (option) => option?.type === OptionType.INFINITE_SCROLL
-        ) ?? -1) !== -1
+        ) || -1) !== -1
       ) {
         utils.infiniteScroll = true;
       }
@@ -112,7 +112,7 @@ export const generateScript = (
     }
   }
   if (hasData) {
-    commands += ` fs.writeFile(outputFilename ?? \`./\${new Date()}.json\`,
+    commands += ` fs.writeFile(outputFilename || \`./\${new Date()}.json\`,
     prettier.format(JSON.stringify(data), {
       parser: 'json',
     }),
@@ -184,7 +184,7 @@ const parseSingleCommandFromStep = (
       command += `
       let url = await page.evaluate(() => {
         const element = document.querySelector("${step.selector}")
-        return element?.href ?? null;
+        return element.href || null;
       });
       await page.goto(url)
       `;
@@ -196,12 +196,12 @@ const parseSingleCommandFromStep = (
         command += `
         const ${variableName} = await page.evaluate(() => {
           const elements = document.querySelectorAll("${step.selector}")
-          return [...elements].map(element => element.textContent ?? null)${amtToScrapeLimitCode};
+          return [...elements].map(element => element.textContent || null)${amtToScrapeLimitCode};
         });`;
       } else {
         command += `const ${variableName} = await page.evaluate(() => {
           const element = document.querySelector("${step.selector}")
-          return element?.textContent;
+          return element.textContent;
         });
         let formatted${
           variableName.charAt(0).toUpperCase() + variableName.slice(1)
@@ -216,13 +216,13 @@ const parseSingleCommandFromStep = (
         command += `
         const ${variableName} = await page.evaluate(() => {
           const elements = document.querySelectorAll("${step.selector}")
-          return [...elements].map(element => element.src ?? null)${amtToScrapeLimitCode};
+          return [...elements].map(element => element.src || null)${amtToScrapeLimitCode};
         });`;
       } else {
         command += `
         const ${variableName} = await page.evaluate(() => {
           const element = document.querySelector("${step.selector}")
-          return element?.src ?? null;
+          return element.src || null;
         });
         let formatted${
           variableName.charAt(0).toUpperCase() + variableName.slice(1)
@@ -232,15 +232,24 @@ const parseSingleCommandFromStep = (
       break;
     }
     case StepAction.EXTRACT_HREF: {
-      command += `
-      const ${variableName} = await page.evaluate(() => {
-        const element = document.querySelector("${step.selector}")
-        return element?.href ?? null;
-      });
-      let formatted${
-        variableName.charAt(0).toUpperCase() + variableName.slice(1)
-      } = ${variableName}
-      `;
+      const amtToScrapeLimitCode = sliceByAmtToScrape(step);
+      if (step.totalSelected && step.totalSelected > 1) {
+        command += `
+        const ${variableName} = await page.evaluate(() => {
+          const elements = document.querySelectorAll("${step.selector}")
+          return [...elements].map(element => element.href || null)${amtToScrapeLimitCode};
+        });`;
+      } else {
+        command += `
+        const ${variableName} = await page.evaluate(() => {
+          const element = document.querySelector("${step.selector}")
+          return element.href || null;
+        });
+        let formatted${
+          variableName.charAt(0).toUpperCase() + variableName.slice(1)
+        } = ${variableName}
+        `;
+      }
       break;
     }
     case StepAction.RECORD_CLICKS_KEYS: {
