@@ -36,6 +36,7 @@ export type KeyInput = {
 };
 export interface Step {
   id: string;
+  index: number;
   action?: StepAction;
   options: StepOption[];
   selector?: string;

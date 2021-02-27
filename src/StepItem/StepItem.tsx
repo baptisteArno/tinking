@@ -12,6 +12,7 @@ import {
   Button,
   OrderedList,
 } from "@chakra-ui/react";
+import { DraggableProvided } from "react-beautiful-dnd";
 import { useAtom } from "jotai";
 import React, { ChangeEvent, useEffect, useRef } from "react";
 import { useState } from "react";
@@ -31,6 +32,7 @@ import { OptionItem } from "./OptionItem";
 import { RecordItem } from "./RecordItem";
 
 type StepItemProps = {
+  draggableProvided: DraggableProvided;
   step: Step;
   stepIndex: number;
   onStepChange: (updatedStep: Step) => void;
@@ -38,6 +40,7 @@ type StepItemProps = {
 };
 
 export const StepItem = ({
+  draggableProvided,
   step,
   stepIndex,
   onStepChange,
@@ -267,7 +270,13 @@ export const StepItem = ({
   const isNotCurrentEditingStep =
     editingStepIndex !== null && editingStepIndex !== stepIndex;
   return (
-    <ListItem display="flex" flexDirection="column">
+    <ListItem
+      display="flex"
+      flexDirection="column"
+      ref={draggableProvided.innerRef}
+      {...draggableProvided.draggableProps}
+      {...draggableProvided.dragHandleProps}
+    >
       <Flex
         backgroundColor="teal.900"
         p="10px"
