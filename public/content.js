@@ -435,9 +435,10 @@ const onClick = (
   selectedNodes = document.querySelectorAll(querySelector);
 
   if (e) {
+    querySelector = getQuerySelectorWithThirdParents(clicked);
     if (querySelector.endsWith(MOUSE_VISITED_CLASSNAME)) {
       querySelector = querySelector
-        .split(` .${MOUSE_VISITED_CLASSNAME}`)[0]
+        .split(`.${MOUSE_VISITED_CLASSNAME}`)[0]
         .replace(" >", "");
     }
     let content;
