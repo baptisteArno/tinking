@@ -119,6 +119,9 @@ export const StepItem = ({
   };
 
   useEffect(() => {
+    if (step.action && isStepInActionProcess(step)) {
+      handleActionChange(step.action);
+    }
     window.addEventListener("message", handleIncomingMessageFromPage);
     return () => {
       window.removeEventListener("message", handleIncomingMessageFromPage);
@@ -259,12 +262,6 @@ export const StepItem = ({
     currentStep.recordedClicksAndKeys.splice(idx, 1);
     setCurrentStep({ ...currentStep });
   };
-
-  useEffect(() => {
-    if (step.action && isStepInActionProcess(step)) {
-      handleActionChange(step.action);
-    }
-  }, []);
 
   const isEditingAndIsEmpty =
     editingStepIndex === stepIndex &&
