@@ -12,6 +12,7 @@ import {
   Button,
   OrderedList,
 } from "@chakra-ui/react";
+import { Draggable } from "react-beautiful-dnd";
 import { useAtom } from "jotai";
 import React, { ChangeEvent, useEffect, useRef } from "react";
 import { useState } from "react";
@@ -126,7 +127,7 @@ export const StepItem = ({
     return () => {
       window.removeEventListener("message", handleIncomingMessageFromPage);
     };
-  }, []);
+  }, [stepIndex]);
 
   useEffect(() => {
     if (!currentStep) {
@@ -175,6 +176,8 @@ export const StepItem = ({
     } else {
       setCurrentStep({
         ...currentStep,
+        action,
+        tagType: parseTagTypeFromAction(action),
         content: getSelectorContent(action, currentStep.selector),
       });
     }
@@ -272,188 +275,205 @@ export const StepItem = ({
     editingStepIndex !== null && editingStepIndex !== stepIndex;
 
   return (
-    <ListItem display="flex" flexDirection="column">
-      <Flex
-        backgroundColor="teal.900"
-        p="10px"
-        rounded="lg"
-        justify="space-between"
-        w="full"
-        align="start"
-      >
-        {editingStepIndex !== stepIndex ? (
-          <VStack
-            align="stretch"
-            flex={1}
-            mr={1}
-            opacity={isNotCurrentEditingStep ? 0.2 : 1}
-            pointerEvents={isNotCurrentEditingStep ? "none" : "auto"}
+    <Draggable
+      key={step.id}
+      draggableId={step.id}
+      index={stepIndex}
+      isDragDisabled={editingStepIndex !== null}
+    >
+      {(provided) => (
+        <ListItem
+          mt={stepIndex === 1 ? 3 : 0}
+          display="flex"
+          flexDirection="column"
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+        >
+          <Flex
+            backgroundColor="teal.900"
+            p="10px"
+            rounded="lg"
+            justify="space-between"
+            w="full"
+            align="start"
           >
-            <Flex style={{ gap: 10 }}>
-              <Tag height="2rem">{stepIndex + 1}</Tag>
-              <SelectAction
-                step={currentStep}
-                onActionChange={handleActionChange}
-              />
-              {(currentStep.action === StepAction.EXTRACT_HREF ||
-                currentStep.action === StepAction.EXTRACT_IMAGE_SRC ||
-                currentStep.action === StepAction.EXTRACT_TEXT) && (
-                <p>and save it as</p>
-              )}
-            </Flex>
-            {(currentStep.action === StepAction.EXTRACT_HREF ||
-              currentStep.action === StepAction.EXTRACT_IMAGE_SRC ||
-              currentStep.action === StepAction.EXTRACT_TEXT) && (
-              <Input
-                size="sm"
-                placeholder="My variable"
-                value={currentStep.variableName}
-                onChange={(e) =>
-                  setCurrentStep({
-                    ...currentStep,
-                    variableName: e.target.value,
-                  })
-                }
-              />
-            )}
-            {currentStep.recordedClicksAndKeys &&
-              currentStep.recordedClicksAndKeys?.map((record, idx) => (
-                <RecordItem
-                  key={idx}
-                  record={record}
-                  onRecordChange={(newRecord) =>
-                    handleRecordChange(newRecord, idx)
-                  }
-                  onRecordDelete={() => handleRecordDelete(idx)}
-                />
-              ))}
-            {currentStep.options && currentStep.options.length > 0 && (
-              <VStack flex="1" overflow="hidden" alignItems="stretch">
-                {currentStep.options.map((_, idx) => (
-                  <OptionItem
-                    key={idx}
-                    stepIndex={stepIndex}
+            {editingStepIndex !== stepIndex ? (
+              <VStack
+                align="stretch"
+                flex={1}
+                mr={1}
+                opacity={isNotCurrentEditingStep ? 0.2 : 1}
+                pointerEvents={isNotCurrentEditingStep ? "none" : "auto"}
+              >
+                <Flex style={{ gap: 10 }}>
+                  <Tag height="2rem" {...provided.dragHandleProps}>
+                    {stepIndex + 1}
+                  </Tag>
+                  <SelectAction
                     step={currentStep}
-                    optionIndex={idx}
-                    onOptionChange={(option, newContent) =>
-                      handleOptionChange(option, idx, newContent)
-                    }
-                    onOptionDelete={() => handleOptionDelete(idx)}
+                    onActionChange={handleActionChange}
                   />
-                ))}
+                  {(currentStep.action === StepAction.EXTRACT_HREF ||
+                    currentStep.action === StepAction.EXTRACT_IMAGE_SRC ||
+                    currentStep.action === StepAction.EXTRACT_TEXT) && (
+                    <p>and save it as</p>
+                  )}
+                </Flex>
+                {(currentStep.action === StepAction.EXTRACT_HREF ||
+                  currentStep.action === StepAction.EXTRACT_IMAGE_SRC ||
+                  currentStep.action === StepAction.EXTRACT_TEXT) && (
+                  <Input
+                    size="sm"
+                    placeholder="My variable"
+                    value={currentStep.variableName ?? ""}
+                    onChange={(e) =>
+                      setCurrentStep({
+                        ...currentStep,
+                        variableName: e.target.value,
+                      })
+                    }
+                  />
+                )}
+                {currentStep.recordedClicksAndKeys &&
+                  currentStep.recordedClicksAndKeys?.map((record, idx) => (
+                    <RecordItem
+                      key={idx}
+                      record={record}
+                      onRecordChange={(newRecord) =>
+                        handleRecordChange(newRecord, idx)
+                      }
+                      onRecordDelete={() => handleRecordDelete(idx)}
+                    />
+                  ))}
+                {currentStep.options && currentStep.options.length > 0 && (
+                  <VStack flex="1" overflow="hidden" alignItems="stretch">
+                    {currentStep.options.map((_, idx) => (
+                      <OptionItem
+                        key={idx}
+                        stepIndex={stepIndex}
+                        step={currentStep}
+                        optionIndex={idx}
+                        onOptionChange={(option, newContent) =>
+                          handleOptionChange(option, idx, newContent)
+                        }
+                        onOptionDelete={() => handleOptionDelete(idx)}
+                      />
+                    ))}
+                  </VStack>
+                )}
+                {currentStep.totalSelected && currentStep.totalSelected > 0 && (
+                  <Button
+                    colorScheme="teal"
+                    onClick={handleAddOptionClick}
+                    leftIcon={<SmallAddIcon />}
+                    size="xs"
+                    variant="outline"
+                  >
+                    Add an option
+                  </Button>
+                )}
+                {formattedContent && (
+                  <Box
+                    display="inline-flex"
+                    align="center"
+                    maxW="300px"
+                    whiteSpace="pre"
+                    overflow="hidden"
+                  >
+                    <Tag colorScheme="green" overflow="hidden">
+                      {formattedContent}
+                    </Tag>
+                  </Box>
+                )}
+                {currentStep.totalSelected && currentStep.totalSelected > 1 && (
+                  <Box display="inline-flex" align="center">
+                    <Tag>{currentStep.totalSelected} nodes</Tag>
+                  </Box>
+                )}
+              </VStack>
+            ) : (
+              <VStack align="start" w="full" overflow="hidden" mr={2}>
+                {currentStep.recordedClicksAndKeys ? (
+                  <>
+                    <Text>⌨️ Recording... </Text>
+                    <OrderedList>
+                      {currentStep.recordedClicksAndKeys.map(
+                        (recorded, idx) => {
+                          return (
+                            <ListItem key={idx}>
+                              {"selector" in recorded ? (
+                                <>
+                                  Click:{" "}
+                                  <Tag whiteSpace="pre" overflow="hidden">
+                                    {recorded.selector}
+                                  </Tag>
+                                </>
+                              ) : (
+                                `Type: ${recorded.input}`
+                              )}
+                            </ListItem>
+                          );
+                        }
+                      )}
+                    </OrderedList>
+                  </>
+                ) : (
+                  <>
+                    <Text>Click on the element you wish to extract or</Text>
+                    <VStack flex="1" align="start" w="full">
+                      <Input
+                        value={currentStep.selector ?? ""}
+                        size="sm"
+                        placeholder="Type a query selector"
+                        onChange={handleSelectorChange}
+                      />
+                      {currentStep.totalSelected && (
+                        <Flex maxW="full" flexWrap="wrap" style={{ gap: 5 }}>
+                          {currentStep.content && (
+                            <Tag whiteSpace="pre" overflow="hidden">
+                              {currentStep.content}
+                            </Tag>
+                          )}
+                          <Tag whiteSpace="pre" overflow="hidden">
+                            {currentStep.totalSelected} elements
+                          </Tag>
+                        </Flex>
+                      )}
+                    </VStack>
+                  </>
+                )}
               </VStack>
             )}
-            {stepIndex > 0 &&
-              currentStep.totalSelected &&
-              currentStep.totalSelected > 0 && (
-                <Button
-                  colorScheme="teal"
-                  onClick={handleAddOptionClick}
-                  leftIcon={<SmallAddIcon />}
-                  size="xs"
-                  variant="outline"
-                >
-                  Add an option
-                </Button>
-              )}
-            {formattedContent && (
-              <Box
-                display="inline-flex"
-                align="center"
-                maxW="300px"
-                whiteSpace="pre"
-                overflow="hidden"
-              >
-                <Tag colorScheme="green" overflow="hidden">
-                  {formattedContent}
-                </Tag>
-              </Box>
-            )}{" "}
-            {stepIndex > 0 &&
-              currentStep.totalSelected &&
-              currentStep.totalSelected > 1 && (
-                <Box display="inline-flex" align="center">
-                  <Tag>{currentStep.totalSelected} nodes</Tag>
-                </Box>
-              )}
-          </VStack>
-        ) : (
-          <VStack align="start" w="full" overflow="hidden" mr={2}>
-            {currentStep.recordedClicksAndKeys ? (
-              <>
-                <Text>⌨️ Recording... </Text>
-                <OrderedList>
-                  {currentStep.recordedClicksAndKeys.map((recorded, idx) => {
-                    return (
-                      <ListItem key={idx}>
-                        {"selector" in recorded ? (
-                          <>
-                            Click:{" "}
-                            <Tag whiteSpace="pre" overflow="hidden">
-                              {recorded.selector}
-                            </Tag>
-                          </>
-                        ) : (
-                          `Type: ${recorded.input}`
-                        )}
-                      </ListItem>
+            {
+              <VStack>
+                <IconButton
+                  disabled={isNotCurrentEditingStep}
+                  size="sm"
+                  colorScheme="red"
+                  aria-label="Remove"
+                  icon={<DeleteIcon />}
+                  onClick={onDeleteStep}
+                />
+                <IconButton
+                  size="sm"
+                  colorScheme="blue"
+                  aria-label="Edit"
+                  icon={
+                    editingStepIndex === stepIndex ? <CheckIcon /> : <MdEdit />
+                  }
+                  disabled={isNotCurrentEditingStep || isEditingAndIsEmpty}
+                  onClick={() => {
+                    setEditingStepIndex(
+                      editingStepIndex === stepIndex ? null : stepIndex
                     );
-                  })}
-                </OrderedList>
-              </>
-            ) : (
-              <>
-                <Text>Click on the element you wish to extract or</Text>
-                <VStack flex="1" align="start" w="full">
-                  <Input
-                    value={currentStep.selector ?? ""}
-                    size="sm"
-                    placeholder="Type a query selector"
-                    onChange={handleSelectorChange}
-                  />
-                  {currentStep.totalSelected && (
-                    <Flex maxW="full" flexWrap="wrap" style={{ gap: 5 }}>
-                      {currentStep.content && (
-                        <Tag whiteSpace="pre" overflow="hidden">
-                          {currentStep.content}
-                        </Tag>
-                      )}
-                      <Tag whiteSpace="pre" overflow="hidden">
-                        {currentStep.totalSelected} elements
-                      </Tag>
-                    </Flex>
-                  )}
-                </VStack>
-              </>
-            )}
-          </VStack>
-        )}
-        {stepIndex > 0 && (
-          <VStack>
-            <IconButton
-              disabled={isNotCurrentEditingStep}
-              size="sm"
-              colorScheme="red"
-              aria-label="Remove"
-              icon={<DeleteIcon />}
-              onClick={onDeleteStep}
-            />
-            <IconButton
-              size="sm"
-              colorScheme="blue"
-              aria-label="Edit"
-              icon={editingStepIndex === stepIndex ? <CheckIcon /> : <MdEdit />}
-              disabled={isNotCurrentEditingStep || isEditingAndIsEmpty}
-              onClick={() => {
-                setEditingStepIndex(
-                  editingStepIndex === stepIndex ? null : stepIndex
-                );
-              }}
-            />
-          </VStack>
-        )}
-      </Flex>
-    </ListItem>
+                  }}
+                />
+              </VStack>
+            }
+          </Flex>
+        </ListItem>
+      )}
+    </Draggable>
   );
 };
 

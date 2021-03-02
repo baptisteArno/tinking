@@ -30,6 +30,8 @@ import {
   stopNodeSelection,
 } from "./service/helperFunctions";
 import { atom, useAtom } from "jotai";
+import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
+import { InitialStep } from "./StepItem/InitialStep";
 
 export const editingStepAtom = atom<number | null>(null);
 
@@ -154,6 +156,18 @@ export const App = (): JSX.Element => {
     }, 100);
   };
 
+  const handleDragEnd = (dropResult: DropResult) => {
+    if (!dropResult.destination) return;
+    const reorderedSteps = [...steps];
+    const movingStep = { ...reorderedSteps[dropResult.source.index] };
+    reorderedSteps.splice(dropResult.source.index, 1);
+    reorderedSteps.splice(dropResult.destination.index, 0, movingStep);
+    setSteps(reorderedSteps);
+  };
+
+  const lastStepHasNoAction =
+    steps.length > 1 && steps[steps.length - 1].action === undefined;
+
   return (
     <ChakraProvider>
       <DarkMode>
@@ -225,27 +239,43 @@ export const App = (): JSX.Element => {
               <Spinner m="auto" />
             ) : (
               <>
-                <OrderedList spacing={3} ml="0">
-                  {steps.map((step, idx) => (
-                    <StepItem
-                      key={step.id}
-                      step={step}
-                      stepIndex={idx}
-                      onStepChange={(newStep) => handleUpdateStep(newStep, idx)}
-                      onDeleteStep={() => handleDeleteStep(idx)}
-                    />
-                  ))}
-                  <Button
-                    disabled={editingStepIndex === steps.length - 1}
-                    colorScheme="teal"
-                    onClick={handleAddStep}
-                    leftIcon={<SmallAddIcon />}
-                    size="sm"
-                    mt={0.5}
-                  >
-                    Add step
-                  </Button>
-                </OrderedList>
+                <InitialStep step={steps[0]} />
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId="stepsList">
+                    {(provided) => (
+                      <OrderedList
+                        spacing={3}
+                        ml="0"
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                      >
+                        {steps.slice(1).map((step, idx) => (
+                          <StepItem
+                            key={step.id}
+                            step={step}
+                            stepIndex={idx + 1}
+                            onStepChange={(newStep) =>
+                              handleUpdateStep(newStep, idx + 1)
+                            }
+                            onDeleteStep={() => handleDeleteStep(idx + 1)}
+                          />
+                        ))}
+                        {provided.placeholder}
+                      </OrderedList>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+                <Button
+                  width="130px"
+                  disabled={editingStepIndex !== null || lastStepHasNoAction}
+                  colorScheme="teal"
+                  onClick={handleAddStep}
+                  leftIcon={<SmallAddIcon />}
+                  size="sm"
+                  mt={2}
+                >
+                  Add step
+                </Button>
 
                 {steps.length > 1 && (
                   <Menu matchWidth>
