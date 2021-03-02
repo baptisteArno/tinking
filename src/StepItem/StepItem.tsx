@@ -24,6 +24,7 @@ import {
   parseDefaultAction,
   parseStepFromWebpage,
   parseTagType,
+  isStepInActionProcess,
   parseTagTypeFromAction,
 } from "../service/helperFunctions";
 import { KeyInput, MouseClick, Step, StepAction, StepOption } from "../types";
@@ -118,6 +119,9 @@ export const StepItem = ({
   };
 
   useEffect(() => {
+    if (step.action && isStepInActionProcess(step)) {
+      handleActionChange(step.action);
+    }
     window.addEventListener("message", handleIncomingMessageFromPage);
     return () => {
       window.removeEventListener("message", handleIncomingMessageFromPage);
@@ -266,6 +270,7 @@ export const StepItem = ({
       currentStep.recordedClicksAndKeys?.length === 0);
   const isNotCurrentEditingStep =
     editingStepIndex !== null && editingStepIndex !== stepIndex;
+
   return (
     <ListItem display="flex" flexDirection="column">
       <Flex
