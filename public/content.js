@@ -232,12 +232,6 @@ const onStepIndex = function (stepIndex, { type, extractUnique, optionIndex }) {
 let handlers = [];
 
 const startSelectNode = (stepIndex, type, optionIndex) => {
-  console.log(
-    "🚀 ~ file: content.js ~ line 235 ~ startSelectNode ~ stepIndex, type, optionIndex",
-    stepIndex,
-    type,
-    optionIndex
-  );
   stopSelectNode();
   if (type === "link") {
     overlayContent.innerHTML = "👇 Click on the link you wish to extract";
@@ -264,7 +258,6 @@ const startSelectNode = (stepIndex, type, optionIndex) => {
 };
 
 const stopSelectNode = () => {
-  console.log(handlers);
   selectNodeOverlay.style.display = "none";
   if (tippyOnlyThisButton) {
     tippyOnlyThisButton.destroy();
@@ -274,7 +267,6 @@ const stopSelectNode = () => {
   });
   document.removeEventListener("mousemove", onMouseMove, { capture: true });
   for (const handler of handlers) {
-    console.log("remove", handler);
     document.removeEventListener("click", handler, { capture: true });
   }
   handlers = [];
@@ -435,9 +427,10 @@ const onClick = (
   selectedNodes = document.querySelectorAll(querySelector);
 
   if (e) {
+    querySelector = getQuerySelectorWithThirdParents(clicked);
     if (querySelector.endsWith(MOUSE_VISITED_CLASSNAME)) {
       querySelector = querySelector
-        .split(` .${MOUSE_VISITED_CLASSNAME}`)[0]
+        .split(`.${MOUSE_VISITED_CLASSNAME}`)[0]
         .replace(" >", "");
     }
     let content;
