@@ -374,7 +374,9 @@ export const StepItem = ({
                     <SelectAmtOfElements
                       step={currentStep}
                       onAmtOfElementsChange={handleAmtOfElementsChange}
-                      onAmtOfElementsFormatChange={handleAmtOfElementsFormatChange}
+                      onAmtOfElementsFormatChange={
+                        handleAmtOfElementsFormatChange
+                      }
                     />
                   </>
                 )}
