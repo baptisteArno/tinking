@@ -30,12 +30,8 @@ import {
   stopNodeSelection,
 } from "./service/helperFunctions";
 import { atom, useAtom } from "jotai";
-import {
-  DragDropContext,
-  Droppable,
-  Draggable,
-  DropResult,
-} from "react-beautiful-dnd";
+import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
+import { InitialStep } from "./StepItem/InitialStep";
 
 export const editingStepAtom = atom<number | null>(null);
 
@@ -46,7 +42,6 @@ export const App = (): JSX.Element => {
   const [steps, setSteps] = useState<Step[]>([
     {
       id: uuidv4(),
-      index: 0,
       action: StepAction.NAVIGATE,
       totalSelected: 1,
       tagName: "a",
@@ -108,7 +103,6 @@ export const App = (): JSX.Element => {
     setSteps([
       {
         id: uuidv4(),
-        index: 0,
         action: StepAction.NAVIGATE,
         selector: "",
         totalSelected: 1,
@@ -126,7 +120,6 @@ export const App = (): JSX.Element => {
       ...steps,
       {
         id: uuidv4(),
-        index: steps.length,
         options: [],
       },
     ]);
@@ -140,11 +133,7 @@ export const App = (): JSX.Element => {
 
   const handleDeleteStep = (idx: number) => {
     steps.splice(idx, 1);
-    const reassignedSteps = steps.map((step, index) => ({
-      ...step,
-      index,
-    }));
-    setSteps([...reassignedSteps]);
+    setSteps([...steps]);
     setEditingStepIndex(null);
   };
 
@@ -169,19 +158,15 @@ export const App = (): JSX.Element => {
 
   const handleDragEnd = (dropResult: DropResult) => {
     if (!dropResult.destination) return;
-    if (editingStepIndex === dropResult.source.index) {
-      setEditingStepIndex(dropResult.destination.index);
-    }
-    const stepsToModify = [...steps];
-    const [reorderedStep] = stepsToModify.splice(dropResult.source.index, 1);
-    stepsToModify.splice(dropResult.destination.index, 0, reorderedStep);
-
-    const reassignedSteps = stepsToModify.map((step, index) => ({
-      ...step,
-      index,
-    }));
-    setSteps(reassignedSteps);
+    const reorderedSteps = [...steps];
+    const movingStep = { ...reorderedSteps[dropResult.source.index] };
+    reorderedSteps.splice(dropResult.source.index, 1);
+    reorderedSteps.splice(dropResult.destination.index, 0, movingStep);
+    setSteps(reorderedSteps);
   };
+
+  const lastStepHasNoAction =
+    steps.length > 1 && steps[steps.length - 1].action === undefined;
 
   return (
     <ChakraProvider>
@@ -254,6 +239,7 @@ export const App = (): JSX.Element => {
               <Spinner m="auto" />
             ) : (
               <>
+                <InitialStep step={steps[0]} />
                 <DragDropContext onDragEnd={handleDragEnd}>
                   <Droppable droppableId="stepsList">
                     {(provided) => (
@@ -263,26 +249,16 @@ export const App = (): JSX.Element => {
                         {...provided.droppableProps}
                         ref={provided.innerRef}
                       >
-                        {steps.map((step) => (
-                          <Draggable
+                        {steps.slice(1).map((step, idx) => (
+                          <StepItem
                             key={step.id}
-                            draggableId={step.id}
-                            index={step.index}
-                          >
-                            {(provided) => (
-                              <StepItem
-                                draggableProvided={provided}
-                                step={step}
-                                stepIndex={step.index}
-                                onStepChange={(newStep) =>
-                                  handleUpdateStep(newStep, step.index)
-                                }
-                                onDeleteStep={() =>
-                                  handleDeleteStep(step.index)
-                                }
-                              />
-                            )}
-                          </Draggable>
+                            step={step}
+                            stepIndex={idx + 1}
+                            onStepChange={(newStep) =>
+                              handleUpdateStep(newStep, idx + 1)
+                            }
+                            onDeleteStep={() => handleDeleteStep(idx + 1)}
+                          />
                         ))}
                         {provided.placeholder}
                       </OrderedList>
@@ -290,13 +266,13 @@ export const App = (): JSX.Element => {
                   </Droppable>
                 </DragDropContext>
                 <Button
-                  style={{ width: "30%" }}
-                  disabled={editingStepIndex === steps.length - 1}
+                  width="130px"
+                  disabled={editingStepIndex !== null || lastStepHasNoAction}
                   colorScheme="teal"
                   onClick={handleAddStep}
                   leftIcon={<SmallAddIcon />}
                   size="sm"
-                  mt={3}
+                  mt={2}
                 >
                   Add step
                 </Button>
@@ -307,7 +283,7 @@ export const App = (): JSX.Element => {
                       as={Button}
                       rightIcon={<ChevronDownIcon />}
                       colorScheme="blue"
-                      my={5}
+                      my={4}
                       minHeight="2.5rem"
                     >
                       ⚙️ Generate code
