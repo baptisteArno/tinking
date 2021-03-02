@@ -148,3 +148,15 @@ export const findUniqueSelector = (
     "*"
   );
 };
+
+export const isStepInActionProcess = (step: Step): boolean => {
+  const isRecordingButNoInputs =
+    step.recordedClicksAndKeys !== undefined &&
+    step.recordedClicksAndKeys.length === 0;
+  const isSelectingButNoTagName = !step.tagName;
+
+  if (step.action === StepAction.RECORD_CLICKS_KEYS) {
+    return isRecordingButNoInputs;
+  }
+  return isSelectingButNoTagName;
+};
