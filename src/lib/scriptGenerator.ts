@@ -211,10 +211,17 @@ const parseSingleCommandFromStep = (
           return [...elements].map(element => element.textContent.replace(/(\\r\\n|\\n|\\r)/gm, "").trim() || null).slice(0,${amountToExtract});
         });`;
       } else {
-        command += `const ${variableName} = await page.evaluate(() => {
+        command += `
+        const ${variableName}Eval = () => {
           const element = document.querySelector("${step.selector}")
           return element.textContent.replace(/(\\r\\n|\\n|\\r)/gm, "").trim();
-        });
+        }
+        let ${variableName} = await page.evaluate(${variableName}Eval);
+        if(${variableName} === null || ${variableName} === ""){
+          // The content could be dynamically loaded. Waiting a bit...
+          await page.waitForTimeout(4000)
+          ${variableName} = await page.evaluate(${variableName}Eval);
+        }
         let formatted${
           variableName.charAt(0).toUpperCase() + variableName.slice(1)
         } = ${variableName}
@@ -235,10 +242,16 @@ const parseSingleCommandFromStep = (
         });`;
       } else {
         command += `
-        const ${variableName} = await page.evaluate(() => {
+        const ${variableName}Eval = () => {
           const element = document.querySelector("${step.selector}")
           return element.src || null;
-        });
+        }
+        let ${variableName} = await page.evaluate(() => ${variableName}Eval);
+        if(${variableName} === null || ${variableName} === ""){
+          // The content could be dynamically loaded. Waiting a bit...
+          await page.waitForTimeout(4000)
+          ${variableName} = await page.evaluate(${variableName}Eval);
+        }
         let formatted${
           variableName.charAt(0).toUpperCase() + variableName.slice(1)
         } = ${variableName}
@@ -259,10 +272,16 @@ const parseSingleCommandFromStep = (
         });`;
       } else {
         command += `
-        const ${variableName} = await page.evaluate(() => {
+        const ${variableName}Eval = () => {
           const element = document.querySelector("${step.selector}")
           return element.href || null;
-        });
+        }
+        let ${variableName} = await page.evaluate(${variableName}Eval);
+        if(${variableName} === null || ${variableName} === ""){
+          // The content could be dynamically loaded. Waiting a bit...
+          await page.waitForTimeout(4000)
+          ${variableName} = await page.evaluate(${variableName}Eval);
+        }
         let formatted${
           variableName.charAt(0).toUpperCase() + variableName.slice(1)
         } = ${variableName}
@@ -279,7 +298,10 @@ const parseSingleCommandFromStep = (
   if (regexOption) {
     command += `const regex = new RegExp("${regexOption.value}", "gm");
     const matchedArray = [...${variableName}.matchAll(regex)];
-    const match = matchedArray[0][1];
+    let match = ""
+    try{
+      match = matchedArray[0][1];
+    } catch(e) {}
     if (match !== "") {
       formatted${
         variableName.charAt(0).toUpperCase() + variableName.slice(1)
@@ -332,24 +354,34 @@ const parseLoopFromStep = (step: Step) => {
           width: 20,
           total: 1000
         });
+        let firstLinkInCurrentPage = urls[0]
         while(i <= 1000){
           paginationBar.tick()
           i += 1
           const nodes = await page.$$("${paginationOption?.value}");
           await nodes.pop().click();
-          await page.waitForTimeout(4000);
+          await page.waitForTimeout(1000);
           try{
             await page.waitForSelector("${step.selector}")
           }catch{
             break;
           }
-          urls = urls.concat(await page.evaluate(() => {
+          const firstLinkInNewPage = (
+            await page.$("${step.selector}")
+          ).href;
+          if (!firstLinkInNewPage || firstLinkInNewPage === firstLinkInCurrentPage) {
+            // There is some kind of loading state we need to wait for
+            await page.waitForTimeout(4000);
+          }
+          const newUrls = await page.evaluate(() => {
             return [...document.querySelectorAll("${step.selector}")].map(node => node.href);
-          }))
+          })
+          urls = urls.concat(newUrls)
           if (urls.length >= ${amountToExtract}) {
             urls = urls.slice(0, ${amountToExtract})
             break;
           }
+          firstLinkInCurrentPage = newUrls[0]
         }
       }
     `;
