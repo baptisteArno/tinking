@@ -266,7 +266,7 @@ export const App = (): JSX.Element => {
                 </DragDropContext>
                 <Button
                   width="130px"
-                  disabled={editingStepIndex !== null || lastStepHasNoAction}
+                  isDisabled={editingStepIndex !== null || lastStepHasNoAction}
                   colorScheme="teal"
                   onClick={handleAddStep}
                   leftIcon={<SmallAddIcon />}

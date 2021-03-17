@@ -8,6 +8,7 @@ import {
 import {
   Button,
   Flex,
+  HStack,
   IconButton,
   Input,
   InputGroup,
@@ -16,6 +17,12 @@ import {
   MenuButton,
   MenuItem,
   MenuList,
+  Popover,
+  PopoverBody,
+  PopoverContent,
+  PopoverTrigger,
+  Text,
+  Tag,
 } from "@chakra-ui/react";
 import React, { ChangeEvent, useEffect, useState } from "react";
 import { BiHash } from "react-icons/bi";
@@ -145,23 +152,54 @@ export const OptionItem = ({
         onOptionChange={(option) => handleOptionTypeChange(option)}
       />
       {option && "value" in option && (
-        <InputGroup size="sm" flex="1">
-          <Input
-            ml={1}
-            placeholder={inputPlaceholder}
-            value={option.value}
-            onChange={(e) => handleOptionValueChange(e, option)}
-          />
-          {regexValid !== undefined && (
-            <InputRightElement>
-              {regexValid ? (
-                <CheckIcon color="teal.200" fontSize={"small"} />
-              ) : (
-                <CloseIcon color="red.200" fontSize={"x-small"} />
-              )}
-            </InputRightElement>
+        <>
+          {option.type === OptionType.REGEX ? (
+            <Popover placement="top" autoFocus={false}>
+              <PopoverTrigger>
+                <InputGroup size="sm" flex="1">
+                  <Input
+                    ml={1}
+                    placeholder={inputPlaceholder}
+                    value={option.value}
+                    onChange={(e) => handleOptionValueChange(e, option)}
+                  />
+                  {regexValid !== undefined && (
+                    <InputRightElement>
+                      {regexValid ? (
+                        <CheckIcon color="teal.200" fontSize={"small"} />
+                      ) : (
+                        <CloseIcon color="red.200" fontSize={"x-small"} />
+                      )}
+                    </InputRightElement>
+                  )}
+                </InputGroup>
+              </PopoverTrigger>
+              <PopoverContent border="none">
+                <PopoverBody>
+                  <Flex flexDir="column">
+                    <Text textDecor="underline">Examples:</Text>
+                    <HStack>
+                      <Text>50$ 👉 </Text> <Tag>(\d+)$</Tag> <Text>👉 50</Text>
+                    </HStack>
+                    <HStack>
+                      <Text>I like cookies 👉 </Text> <Tag>I (\w+) cookies</Tag>{" "}
+                      <Text>👉 like</Text>
+                    </HStack>
+                  </Flex>
+                </PopoverBody>
+              </PopoverContent>
+            </Popover>
+          ) : (
+            <InputGroup size="sm" flex="1">
+              <Input
+                ml={1}
+                placeholder={inputPlaceholder}
+                value={option.value}
+                onChange={(e) => handleOptionValueChange(e, option)}
+              />
+            </InputGroup>
           )}
-        </InputGroup>
+        </>
       )}
       <IconButton
         size="xs"
