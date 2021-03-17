@@ -68,12 +68,11 @@ You should now see Tinking listed among any other extensions that you have insta
 - [x] Documentation on how to use the generated code
 - [x] Multiple export options (playwright, others?)
 - [x] Regex to filter data from scraped text
-- [ ] Drag-and-drop steps
-- [ ] [DOC] Write examples
+- [x] Drag-and-drop steps
+- [ ] [DOC] Write examples of several popular sites
 - [ ] Unit tests
 - [ ] Cool logo
 - [ ] Ship extension to Chrome Web store (Waiting for Google review)
-- [ ] Github action to automatically publish new versions on Chrome Web Store
 
 # Couldn't scrape a particular website?
 
