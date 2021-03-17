@@ -224,7 +224,7 @@ const SelectOption = ({
   optionType?: OptionType;
   onOptionChange: (val: OptionType) => void;
 }) => (
-  <Menu>
+  <Menu defaultIsOpen={optionType === undefined}>
     <MenuButton
       size="sm"
       as={Button}

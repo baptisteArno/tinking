@@ -495,7 +495,7 @@ const SelectAction = ({
   step: Step;
   onActionChange: (val: StepAction) => void;
 }) => (
-  <Menu>
+  <Menu defaultIsOpen={step.action === undefined}>
     <MenuButton size="sm" as={Button} rightIcon={<ChevronDownIcon />}>
       {step.action ?? "Select an action"}
     </MenuButton>

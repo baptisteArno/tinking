@@ -269,8 +269,8 @@ const stopSelectNode = () => {
   for (const handler of handlers) {
     document.removeEventListener("click", handler, { capture: true });
   }
-  handlers = [];
   stopClicksKeysRecording();
+  handlers = [];
 };
 
 const onRecordClick = function (stepIndex) {

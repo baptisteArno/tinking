@@ -246,7 +246,7 @@ const parseSingleCommandFromStep = (
           const element = document.querySelector("${step.selector}")
           return element.src || null;
         }
-        let ${variableName} = await page.evaluate(() => ${variableName}Eval);
+        let ${variableName} = await page.evaluate(${variableName}Eval);
         if(${variableName} === null || ${variableName} === ""){
           // The content could be dynamically loaded. Waiting a bit...
           await page.waitForTimeout(4000)
@@ -341,9 +341,13 @@ const parseLoopFromStep = (step: Step) => {
       await page.waitForSelector("${step.selector}")
       let urls = []
       urls = await page.evaluate(() => {
-        return [...document.querySelectorAll("${step.selector}")].map((node) => node.href);
+        return [...document.querySelectorAll("${
+          step.selector
+        }")].map((node) => node.href);
       });
-      if(urls.length >= ${amountToExtract}){
+      if(${
+        amountToExtract === "" ? "false" : `urls.length >= ${amountToExtract}`
+      }){
         urls = urls.slice(0, ${amountToExtract})
       } else {
         let i = 0
@@ -366,18 +370,30 @@ const parseLoopFromStep = (step: Step) => {
           }catch{
             break;
           }
-          const firstLinkInNewPage = (
-            await page.$("${step.selector}")
-          ).href;
-          if (!firstLinkInNewPage || firstLinkInNewPage === firstLinkInCurrentPage) {
+          let firstLinkInNewPage = await page.evaluate(() => {return document.querySelector("${
+            step.selector
+          }").href});
+          if (firstLinkInNewPage === firstLinkInCurrentPage) {
             // There is some kind of loading state we need to wait for
             await page.waitForTimeout(4000);
+            firstLinkInNewPage = await page.evaluate(() => {return document.querySelector("${
+              step.selector
+            }").href});
+            if (firstLinkInNewPage === firstLinkInCurrentPage) {
+              break;
+            }
           }
           const newUrls = await page.evaluate(() => {
-            return [...document.querySelectorAll("${step.selector}")].map(node => node.href);
+            return [...document.querySelectorAll("${
+              step.selector
+            }")].map(node => node.href);
           })
           urls = urls.concat(newUrls)
-          if (urls.length >= ${amountToExtract}) {
+          if (${
+            amountToExtract === ""
+              ? "false"
+              : `urls.length >= ${amountToExtract}`
+          }) {
             urls = urls.slice(0, ${amountToExtract})
             break;
           }
@@ -460,6 +476,7 @@ const parseLibrarySettings = (library: "puppeteer" | "playwright") => {
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
+        "--window-size=1300,1024"
       ],
     });`;
   }
