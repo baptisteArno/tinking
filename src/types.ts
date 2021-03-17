@@ -16,6 +16,7 @@ export enum OptionType {
   INFINITE_SCROLL = "Infinite Scroll",
   PAGINATION = "Pagination",
   REGEX = "Regex",
+  CUSTOM_AMOUNT_TO_EXTRACT = "Custom amount to extract",
 }
 
 export type SimpleOption = {
@@ -40,7 +41,6 @@ export interface Step {
   options: StepOption[];
   selector?: string;
   totalSelected?: number;
-  amountToScrape?: number;
   tagName?: string;
   tagType?: TagType;
   variableName?: string;
@@ -54,9 +54,4 @@ export interface ScrappedStep {
   tagName: string;
   tagType: TagType;
   content: string;
-}
-
-export enum AmountOption {
-  ALL = "All",
-  CUSTOM = "Custom amount",
 }

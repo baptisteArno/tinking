@@ -4,8 +4,6 @@ import {
   Flex,
   Select,
   Input,
-  NumberInput,
-  NumberInputField,
   Box,
   Tag,
   VStack,
@@ -30,14 +28,7 @@ import {
   isStepInActionProcess,
   parseTagTypeFromAction,
 } from "../service/helperFunctions";
-import {
-  KeyInput,
-  MouseClick,
-  Step,
-  StepAction,
-  StepOption,
-  AmountOption,
-} from "../types";
+import { KeyInput, MouseClick, Step, StepAction, StepOption } from "../types";
 import { OptionItem } from "./OptionItem";
 import { RecordItem } from "./RecordItem";
 
@@ -198,7 +189,6 @@ export const StepItem = ({
       setCurrentStep({
         ...currentStep,
         totalSelected: 0,
-        amountToScrape: 0,
         tagName: undefined,
         tagType: undefined,
         action: undefined,
@@ -223,7 +213,6 @@ export const StepItem = ({
       setCurrentStep({
         ...currentStep,
         totalSelected: 0,
-        amountToScrape: 0,
         tagName: undefined,
         tagType: undefined,
         action: undefined,
@@ -237,7 +226,6 @@ export const StepItem = ({
       setCurrentStep({
         ...currentStep,
         totalSelected: nodes.length,
-        amountToScrape: -1,
         tagName,
         tagType: parseTagType(tagName),
         action: parseDefaultAction(tagName),
@@ -254,7 +242,6 @@ export const StepItem = ({
       setCurrentStep({
         ...currentStep,
         totalSelected: 0,
-        amountToScrape: 0,
         tagName: undefined,
         tagType: undefined,
         action: undefined,
@@ -262,30 +249,6 @@ export const StepItem = ({
         selector: selector,
       });
     }
-  };
-
-  const handleAmtOfElementsFormatChange = (amountOption: AmountOption) => {
-    if (amountOption === AmountOption.ALL) {
-      setCurrentStep({
-        ...currentStep,
-        amountToScrape: -1,
-      });
-    } else {
-      setCurrentStep({
-        ...currentStep,
-        amountToScrape: currentStep.totalSelected,
-      });
-    }
-  };
-
-  const handleAmtOfElementsChange = (amount: number) => {
-    if (!amount && amount !== 0) {
-      amount = 0;
-    }
-    setCurrentStep({
-      ...currentStep,
-      amountToScrape: amount,
-    });
   };
 
   const handleRecordChange = (
@@ -359,24 +322,17 @@ export const StepItem = ({
                 {(currentStep.action === StepAction.EXTRACT_HREF ||
                   currentStep.action === StepAction.EXTRACT_IMAGE_SRC ||
                   currentStep.action === StepAction.EXTRACT_TEXT) && (
-                  <>
-                    <Input
-                      size="sm"
-                      placeholder="My variable"
-                      value={currentStep.variableName ?? ""}
-                      onChange={(e) =>
-                        setCurrentStep({
-                          ...currentStep,
-                          variableName: e.target.value,
-                        })
-                      }
-                    />
-                    <SelectAmtOfElements
-                      step={currentStep}
-                      onAmtOfElementsChange={handleAmtOfElementsChange}
-                      onAmtOfElementsFormatChange={handleAmtOfElementsFormatChange}
-                    />
-                  </>
+                  <Input
+                    size="sm"
+                    placeholder="My variable"
+                    value={currentStep.variableName ?? ""}
+                    onChange={(e) =>
+                      setCurrentStep({
+                        ...currentStep,
+                        variableName: e.target.value,
+                      })
+                    }
+                  />
                 )}
                 {currentStep.recordedClicksAndKeys &&
                   currentStep.recordedClicksAndKeys?.map((record, idx) => (
@@ -471,13 +427,6 @@ export const StepItem = ({
                         placeholder="Type a query selector"
                         onChange={handleSelectorChange}
                       />
-                      <SelectAmtOfElements
-                        step={currentStep}
-                        onAmtOfElementsChange={handleAmtOfElementsChange}
-                        onAmtOfElementsFormatChange={
-                          handleAmtOfElementsFormatChange
-                        }
-                      />
                       {currentStep.totalSelected && (
                         <Flex maxW="full" flexWrap="wrap" style={{ gap: 5 }}>
                           {currentStep.content && (
@@ -554,52 +503,3 @@ const SelectAction = ({
     </option>
   </Select>
 );
-
-const SelectAmtOfElements = ({
-  step,
-  onAmtOfElementsChange,
-  onAmtOfElementsFormatChange,
-}: {
-  step: Step;
-  onAmtOfElementsChange: (val: number) => void;
-  onAmtOfElementsFormatChange: (val: AmountOption) => void;
-}) => {
-  if (step.totalSelected && step.totalSelected > 0) {
-    return (
-      <React.Fragment>
-        <Text>Amount of elements to scrape</Text>
-        <Flex style={{ gap: 10 }}>
-          <Select
-            size="sm"
-            display="inline-flex"
-            w="160px"
-            value={
-              step.amountToScrape === -1
-                ? AmountOption.ALL
-                : AmountOption.CUSTOM
-            }
-            onChange={(e) =>
-              onAmtOfElementsFormatChange(e.target.value as AmountOption)
-            }
-          >
-            <option value={AmountOption.ALL}>{AmountOption.ALL}</option>
-            <option value={AmountOption.CUSTOM}>{AmountOption.CUSTOM}</option>
-          </Select>
-          {step.amountToScrape === -1 || (
-            <NumberInput
-              value={step.amountToScrape}
-              size="sm"
-              onChange={(valueString) =>
-                onAmtOfElementsChange(Number(valueString))
-              }
-            >
-              <NumberInputField />
-            </NumberInput>
-          )}
-        </Flex>
-      </React.Fragment>
-    );
-  } else {
-    return null;
-  }
-};

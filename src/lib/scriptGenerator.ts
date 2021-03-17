@@ -179,6 +179,9 @@ const parseSingleCommandFromStep = (
   const regexOption = step.options.find(
     (option) => option?.type === OptionType.REGEX
   ) as OptionWithValue;
+
+  const amountToExtract = getAmountToExtract(step);
+
   switch (step.action) {
     case StepAction.NAVIGATE: {
       command += `
@@ -191,17 +194,20 @@ const parseSingleCommandFromStep = (
       break;
     }
     case StepAction.EXTRACT_TEXT: {
-      const amtToScrapeLimitCode = sliceByAmtToScrape(step);
-      if (step.totalSelected && step.totalSelected > 1) {
+      if (
+        step.totalSelected &&
+        step.totalSelected > 1 &&
+        amountToExtract !== "1"
+      ) {
         command += `
         const ${variableName} = await page.evaluate(() => {
           const elements = document.querySelectorAll("${step.selector}")
-          return [...elements].map(element => element.textContent || null)${amtToScrapeLimitCode};
+          return [...elements].map(element => element.textContent.replace(/(\r\n|\n|\r)/gm, "").trim() || null).slice(0,${amountToExtract});
         });`;
       } else {
         command += `const ${variableName} = await page.evaluate(() => {
           const element = document.querySelector("${step.selector}")
-          return element.textContent;
+          return element.textContent.replace(/(\r\n|\n|\r)/gm, "").trim();
         });
         let formatted${
           variableName.charAt(0).toUpperCase() + variableName.slice(1)
@@ -211,12 +217,15 @@ const parseSingleCommandFromStep = (
       break;
     }
     case StepAction.EXTRACT_IMAGE_SRC: {
-      const amtToScrapeLimitCode = sliceByAmtToScrape(step);
-      if (step.totalSelected && step.totalSelected > 1) {
+      if (
+        step.totalSelected &&
+        step.totalSelected > 1 &&
+        amountToExtract !== "1"
+      ) {
         command += `
         const ${variableName} = await page.evaluate(() => {
           const elements = document.querySelectorAll("${step.selector}")
-          return [...elements].map(element => element.src || null)${amtToScrapeLimitCode};
+          return [...elements].map(element => element.src || null).slice(0,${amountToExtract});
         });`;
       } else {
         command += `
@@ -232,11 +241,15 @@ const parseSingleCommandFromStep = (
       break;
     }
     case StepAction.EXTRACT_HREF: {
-      if (step.totalSelected && step.totalSelected > 1) {
+      if (
+        step.totalSelected &&
+        step.totalSelected > 1 &&
+        amountToExtract !== "1"
+      ) {
         command += `
         const ${variableName} = await page.evaluate(() => {
           const elements = document.querySelectorAll("${step.selector}")
-          return [...elements].map(element => element.href || null);
+          return [...elements].map(element => element.href || null).slice(0,${amountToExtract});
         });`;
       } else {
         command += `
@@ -271,9 +284,17 @@ const parseSingleCommandFromStep = (
   return command;
 };
 
-const sliceByAmtToScrape = (step: Step) => {
-  if (step.amountToScrape && step.amountToScrape > 0) {
-    return `.slice(0,${step.amountToScrape})`;
+const getAmountToExtract = (step: Step): string => {
+  const optionIndex = step.options.findIndex(
+    (option) => option?.type === OptionType.CUSTOM_AMOUNT_TO_EXTRACT
+  );
+  const stepHasCustomAmountToExtract = optionIndex !== -1;
+
+  if (stepHasCustomAmountToExtract) {
+    const option: OptionWithValue = step.options[
+      optionIndex
+    ] as OptionWithValue;
+    return option.value;
   } else {
     return "";
   }
@@ -284,7 +305,7 @@ const parseLoopFromStep = (step: Step) => {
     (option) => option?.type === OptionType.PAGINATION
   ) as OptionWithValue | undefined;
 
-  const amtToScrape = sliceByAmtToScrape(step);
+  const amountToExtract = getAmountToExtract(step);
 
   let urlsExtractionCommand;
   if (paginationOption) {
@@ -292,33 +313,37 @@ const parseLoopFromStep = (step: Step) => {
       await page.waitForSelector("${step.selector}")
       let urls = []
       urls = await page.evaluate(() => {
-        return [...document.querySelectorAll("${step.selector}")].map((node) => node.href)${amtToScrape};
+        return [...document.querySelectorAll("${step.selector}")].map((node) => node.href);
       });
-      let i = 0
-      // 1000 pages max
-      console.log("Extracting URLs");
-      const paginationBar = new ProgressBar(" scrapping [:bar] :rate/bps :percent :etas", {
-        complete: "=",
-        incomplete: " ",
-        width: 20,
-        total: 1000
-      });
-      while(i <= 1000){
-        paginationBar.tick()
-        i += 1
-        const nodes = await page.$$("${paginationOption?.value}");
-        await nodes.pop().click();
-        await page.waitForTimeout(4000);
-        try{
-          await page.waitForSelector("${step.selector}")
-        }catch{
-          break;
-        }
-        urls = urls.concat(await page.evaluate(() => {
-          return [...document.querySelectorAll("${step.selector}")].map(node => node.href);
-        }))${amtToScrape}
-        if (urls.length >= ${step.amountToScrape}) {
-          break;
+      if(urls.length >= ${amountToExtract}){
+        urls = urls.slice(0, ${amountToExtract})
+      } else {
+        let i = 0
+        console.log("Extracting URLs");
+        const paginationBar = new ProgressBar(" scrapping [:bar] :rate/bps :percent :etas", {
+          complete: "=",
+          incomplete: " ",
+          width: 20,
+          total: 1000
+        });
+        while(i <= 1000){
+          paginationBar.tick()
+          i += 1
+          const nodes = await page.$$("${paginationOption?.value}");
+          await nodes.pop().click();
+          await page.waitForTimeout(4000);
+          try{
+            await page.waitForSelector("${step.selector}")
+          }catch{
+            break;
+          }
+          urls = urls.concat(await page.evaluate(() => {
+            return [...document.querySelectorAll("${step.selector}")].map(node => node.href);
+          }))
+          if (urls.length >= ${amountToExtract}) {
+            urls = urls.slice(0, ${amountToExtract})
+            break;
+          }
         }
       }
     `;
