@@ -22,12 +22,20 @@ export const InitialStep = ({ step }: InitialStepProps): JSX.Element => {
       <Box
         display="inline-flex"
         align="center"
-        maxW="300px"
+        maxW="235px"
         whiteSpace="pre"
-        overflow="hidden"
+        overflowX="hidden"
         ml={2}
       >
-        <Tag colorScheme="green" overflow="hidden">
+        <Tag
+          colorScheme="green"
+          overflowX="scroll"
+          css={{
+            "&::-webkit-scrollbar": {
+              display: "none",
+            },
+          }}
+        >
           {step.content}
         </Tag>
       </Box>

@@ -1,13 +1,25 @@
-import { CheckIcon, CloseIcon, DeleteIcon } from "@chakra-ui/icons";
 import {
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  CloseIcon,
+  DeleteIcon,
+} from "@chakra-ui/icons";
+import {
+  Button,
   Flex,
   IconButton,
   Input,
   InputGroup,
   InputRightElement,
-  Select,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
 } from "@chakra-ui/react";
 import React, { ChangeEvent, useEffect, useState } from "react";
+import { BiHash } from "react-icons/bi";
+import { VscRegex } from "react-icons/vsc";
 import {
   launchNodeSelection,
   parseInputPlaceholderFromOption,
@@ -129,11 +141,11 @@ export const OptionItem = ({
   return (
     <Flex alignItems="center" justifyContent="space-between">
       <SelectOption
-        option={option?.type}
+        optionType={option?.type}
         onOptionChange={(option) => handleOptionTypeChange(option)}
       />
       {option && "value" in option && (
-        <InputGroup size="sm">
+        <InputGroup size="sm" flex="1">
           <Input
             ml={1}
             placeholder={inputPlaceholder}
@@ -164,27 +176,46 @@ export const OptionItem = ({
 };
 
 const SelectOption = ({
-  option,
+  optionType,
   onOptionChange,
 }: {
-  option?: OptionType;
+  optionType?: OptionType;
   onOptionChange: (val: OptionType) => void;
 }) => (
-  <Select
-    size="sm"
-    display="inline-flex"
-    w="160px"
-    value={option}
-    onChange={(e) => onOptionChange(e.target.value as OptionType)}
-  >
-    <option>Select an option</option>
-    <option value={OptionType.CUSTOM_AMOUNT_TO_EXTRACT}>
-      {OptionType.CUSTOM_AMOUNT_TO_EXTRACT}
-    </option>
-    <option value={OptionType.INFINITE_SCROLL}>
-      {OptionType.INFINITE_SCROLL}
-    </option>
-    <option value={OptionType.PAGINATION}>{OptionType.PAGINATION}</option>
-    <option value={OptionType.REGEX}>{OptionType.REGEX}</option>
-  </Select>
+  <Menu>
+    <MenuButton
+      size="sm"
+      as={Button}
+      rightIcon={<ChevronDownIcon />}
+      _focus={{ outline: "none" }}
+    >
+      {optionType ?? "Select an option"}
+    </MenuButton>
+    <MenuList bgColor="teal.700" border="none">
+      <MenuItem
+        onClick={() => onOptionChange(OptionType.CUSTOM_AMOUNT_TO_EXTRACT)}
+        icon={<BiHash />}
+      >
+        {OptionType.CUSTOM_AMOUNT_TO_EXTRACT}
+      </MenuItem>
+      <MenuItem
+        icon={<VscRegex />}
+        onClick={() => onOptionChange(OptionType.REGEX)}
+      >
+        {OptionType.REGEX}
+      </MenuItem>
+      <MenuItem
+        icon={<ChevronRightIcon />}
+        onClick={() => onOptionChange(OptionType.PAGINATION)}
+      >
+        {OptionType.PAGINATION}
+      </MenuItem>
+      <MenuItem
+        icon={<ChevronDownIcon />}
+        onClick={() => onOptionChange(OptionType.INFINITE_SCROLL)}
+      >
+        {OptionType.INFINITE_SCROLL}
+      </MenuItem>
+    </MenuList>
+  </Menu>
 );

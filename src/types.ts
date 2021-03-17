@@ -5,9 +5,9 @@ export enum TagType {
 }
 
 export enum StepAction {
-  NAVIGATE = "Go to link",
+  NAVIGATE = "Navigate to link",
   EXTRACT_TEXT = "Extract text",
-  EXTRACT_HREF = "Extract link",
+  EXTRACT_HREF = "Extract URL",
   EXTRACT_IMAGE_SRC = "Extract image URL",
   RECORD_CLICKS_KEYS = "Record clicks and keys",
 }

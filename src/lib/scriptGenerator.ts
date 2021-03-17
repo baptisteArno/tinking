@@ -122,7 +122,7 @@ export const generateScript = (
   );`;
   }
 
-  const script = `
+  let script = `
   ${
     library === "puppeteer"
       ? `const puppeteer = require("puppeteer");`
@@ -151,10 +151,16 @@ export const generateScript = (
   })();
   ${parseUtilsFunctions(utils)}
   `;
-  return prettier.format(script, {
-    parser: "babel",
-    plugins: [babelParser],
-  });
+  try {
+    script = prettier.format(script, {
+      parser: "babel",
+      plugins: [babelParser],
+    });
+  } catch (e) {
+    console.error("Couldn't format script:", e);
+    console.log("Steps:", steps);
+  }
+  return script;
 };
 
 const parseSingleCommandFromStep = (
@@ -202,12 +208,12 @@ const parseSingleCommandFromStep = (
         command += `
         const ${variableName} = await page.evaluate(() => {
           const elements = document.querySelectorAll("${step.selector}")
-          return [...elements].map(element => element.textContent.replace(/(\r\n|\n|\r)/gm, "").trim() || null).slice(0,${amountToExtract});
+          return [...elements].map(element => element.textContent.replace(/(\\r\\n|\\n|\\r)/gm, "").trim() || null).slice(0,${amountToExtract});
         });`;
       } else {
         command += `const ${variableName} = await page.evaluate(() => {
           const element = document.querySelector("${step.selector}")
-          return element.textContent.replace(/(\r\n|\n|\r)/gm, "").trim();
+          return element.textContent.replace(/(\\r\\n|\\n|\\r)/gm, "").trim();
         });
         let formatted${
           variableName.charAt(0).toUpperCase() + variableName.slice(1)

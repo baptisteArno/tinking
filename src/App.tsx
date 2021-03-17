@@ -18,9 +18,9 @@ import {
   MenuList,
   OrderedList,
   Spinner,
+  useClipboard,
 } from "@chakra-ui/react";
 import React, { useEffect, useRef, useState } from "react";
-import CopyToClipboard from "react-copy-to-clipboard";
 import { Step, StepAction, TagType } from "./types";
 import { generateScript } from "./lib/scriptGenerator";
 import { v4 as uuidv4 } from "uuid";
@@ -36,7 +36,6 @@ import { InitialStep } from "./StepItem/InitialStep";
 export const editingStepAtom = atom<number | null>(null);
 
 export const App = (): JSX.Element => {
-  const [copied, setCopied] = useState(false);
   const [script, setScript] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [steps, setSteps] = useState<Step[]>([
@@ -52,6 +51,7 @@ export const App = (): JSX.Element => {
   ]);
   const [pointerDragPropery, setPointerDragPropery] = useState("grab");
   const [editingStepIndex, setEditingStepIndex] = useAtom(editingStepAtom);
+  const { hasCopied, onCopy } = useClipboard(script);
 
   const scrollingContainer = useRef<HTMLDivElement>(null);
 
@@ -142,7 +142,6 @@ export const App = (): JSX.Element => {
   };
 
   const handleGenerateCodeClick = (library: "puppeteer" | "playwright") => {
-    setCopied(false);
     setScript(generateScript(steps, library));
     scrollToBottom();
   };
@@ -273,6 +272,9 @@ export const App = (): JSX.Element => {
                   leftIcon={<SmallAddIcon />}
                   size="sm"
                   mt={2}
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  //@ts-ignore
+                  flexShrink="0"
                 >
                   Add step
                 </Button>
@@ -286,9 +288,9 @@ export const App = (): JSX.Element => {
                       my={4}
                       minHeight="2.5rem"
                     >
-                      ⚙️ Generate code
+                      Generate code
                     </MenuButton>
-                    <MenuList>
+                    <MenuList border="none">
                       <MenuItem
                         onClick={() => handleGenerateCodeClick("puppeteer")}
                       >
@@ -304,29 +306,28 @@ export const App = (): JSX.Element => {
                 )}
                 {script !== "" && (
                   <>
-                    <Code>{script}</Code>
+                    <Code maxH="xl" overflowY="scroll" pos="relative">
+                      {script}
+                      <Button
+                        colorScheme="blue"
+                        pos="absolute"
+                        top={2}
+                        right={2}
+                        isDisabled={hasCopied}
+                        onClick={onCopy}
+                      >
+                        {hasCopied ? "Copied" : "Copy"}
+                      </Button>
+                    </Code>
                     <Link
                       as="a"
                       href="https://github.com/baptisteArno/tinking-code-starter"
                       target="_blank"
                       marginY={2}
+                      textAlign="center"
                     >
                       How to use this code?
                     </Link>
-                    <CopyToClipboard
-                      text={script}
-                      onCopy={() => setCopied(true)}
-                    >
-                      <Button
-                        colorScheme="green"
-                        isDisabled={copied}
-                        minHeight="2.5rem"
-                        mt={1}
-                        mb="1rem"
-                      >
-                        {copied ? "Copied" : "Copy code"}
-                      </Button>
-                    </CopyToClipboard>
                   </>
                 )}
               </>
