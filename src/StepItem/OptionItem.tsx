@@ -37,6 +37,7 @@ import {
   OptionWithValue,
   SimpleOption,
   Step,
+  StepAction,
   StepOption,
 } from "../types";
 
@@ -148,6 +149,7 @@ export const OptionItem = ({
   return (
     <Flex alignItems="center" justifyContent="space-between">
       <SelectOption
+        stepAction={step.action}
         optionType={option?.type}
         onOptionChange={(option) => handleOptionTypeChange(option)}
       />
@@ -214,9 +216,11 @@ export const OptionItem = ({
 };
 
 const SelectOption = ({
+  stepAction,
   optionType,
   onOptionChange,
 }: {
+  stepAction?: StepAction;
   optionType?: OptionType;
   onOptionChange: (val: OptionType) => void;
 }) => (
@@ -242,12 +246,14 @@ const SelectOption = ({
       >
         {OptionType.REGEX}
       </MenuItem>
-      <MenuItem
-        icon={<ChevronRightIcon />}
-        onClick={() => onOptionChange(OptionType.PAGINATION)}
-      >
-        {OptionType.PAGINATION}
-      </MenuItem>
+      {stepAction === StepAction.NAVIGATE && (
+        <MenuItem
+          icon={<ChevronRightIcon />}
+          onClick={() => onOptionChange(OptionType.PAGINATION)}
+        >
+          {OptionType.PAGINATION}
+        </MenuItem>
+      )}
       <MenuItem
         icon={<ChevronDownIcon />}
         onClick={() => onOptionChange(OptionType.INFINITE_SCROLL)}

@@ -306,7 +306,7 @@ export const App = (): JSX.Element => {
                 )}
                 {script !== "" && (
                   <>
-                    <Code maxH="xl" overflowY="scroll" pos="relative">
+                    <Code overflowY="scroll" pos="relative" flex="0 0 360px">
                       {script}
                       <Button
                         colorScheme="blue"
