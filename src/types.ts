@@ -16,6 +16,7 @@ export enum OptionType {
   INFINITE_SCROLL = "Infinite Scroll",
   PAGINATION = "Pagination",
   REGEX = "Regex",
+  CUSTOM_AMOUNT_TO_EXTRACT = "Custom amount to extract",
 }
 
 export type SimpleOption = {

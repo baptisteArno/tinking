@@ -444,7 +444,9 @@ const onClick = (
         break;
       }
       default: {
-        content = selectedNodes[0].textContent;
+        content = selectedNodes[0].textContent
+          .replace(/(\r\n|\n|\r)/gm, "")
+          .trim();
       }
     }
     extensionIframe.contentWindow.postMessage(
@@ -482,7 +484,7 @@ const onClick = (
         e.preventDefault();
         e.stopImmediatePropagation();
         tippyOnlyThisButton.destroy();
-        let content = clicked.textContent;
+        let content = clicked.textContent.replace(/(\r\n|\n|\r)/gm, "").trim();
         switch (type) {
           case "a": {
             content = clicked.href;

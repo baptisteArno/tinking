@@ -1,4 +1,4 @@
-import { TagType, StepAction, Step, ScrappedStep } from "../types";
+import { TagType, StepAction, Step, ScrappedStep, OptionType } from "../types";
 
 export const parseTagTypeFromAction = (action: StepAction): TagType => {
   if (action === StepAction.EXTRACT_HREF || action === StepAction.NAVIGATE) {
@@ -42,7 +42,9 @@ export const getSelectorContent = (
   }
   switch (action) {
     case StepAction.EXTRACT_TEXT: {
-      return element.textContent ?? undefined;
+      return (
+        element.textContent?.replace(/(\r\n|\n|\r)/gm, "").trim() ?? undefined
+      );
     }
     case StepAction.EXTRACT_IMAGE_SRC: {
       return (element as HTMLImageElement).src;
@@ -158,4 +160,23 @@ export const isStepInActionProcess = (step: Step): boolean => {
     return isRecordingButNoInputs;
   }
   return isSelectingButNoTagName;
+};
+
+export const parseInputPlaceholderFromOption = (
+  optionType?: OptionType
+): string => {
+  switch (optionType) {
+    case OptionType.PAGINATION: {
+      return "Node query selector";
+    }
+    case OptionType.REGEX: {
+      return "Regex with group to match";
+    }
+    case OptionType.CUSTOM_AMOUNT_TO_EXTRACT: {
+      return "Amount to extract";
+    }
+    default: {
+      return "";
+    }
+  }
 };

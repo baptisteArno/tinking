@@ -10,6 +10,7 @@ import {
 import React, { ChangeEvent, useEffect, useState } from "react";
 import {
   launchNodeSelection,
+  parseInputPlaceholderFromOption,
   stopNodeSelection,
 } from "../service/helperFunctions";
 import {
@@ -44,6 +45,9 @@ export const OptionItem = ({
     false
   );
   const [regexValid, setRegexValid] = useState<boolean | undefined>();
+  const [inputPlaceholder, setInputPlaceholder] = useState(
+    parseInputPlaceholderFromOption(option?.type)
+  );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleIncomingMessageFromPage = (event: any) => {
@@ -67,20 +71,26 @@ export const OptionItem = ({
     };
   });
 
-  const handleOptionTypeChange = (option: OptionType) => {
+  const handleOptionTypeChange = (optionType: OptionType) => {
     let newOption: SimpleOption | OptionWithValue;
-    if (option === OptionType.PAGINATION || option === OptionType.REGEX) {
+    const optionNeedValue =
+      optionType === OptionType.PAGINATION ||
+      optionType === OptionType.REGEX ||
+      optionType === OptionType.CUSTOM_AMOUNT_TO_EXTRACT;
+
+    if (optionNeedValue) {
       newOption = {
-        type: option,
+        type: optionType,
         value: "",
       };
+      setInputPlaceholder(parseInputPlaceholderFromOption(optionType));
     } else {
       newOption = {
-        type: option,
+        type: optionType,
       };
     }
     onOptionChange(newOption);
-    if (option === OptionType.PAGINATION) {
+    if (optionType === OptionType.PAGINATION) {
       setIsSelectingPaginateElement(true);
       launchNodeSelection(stepIndex, "pagination", { optionIndex });
     }
@@ -126,11 +136,7 @@ export const OptionItem = ({
         <InputGroup size="sm">
           <Input
             ml={1}
-            placeholder={
-              option.type === OptionType.REGEX
-                ? "Regex with group to match"
-                : "Selector"
-            }
+            placeholder={inputPlaceholder}
             value={option.value}
             onChange={(e) => handleOptionValueChange(e, option)}
           />
@@ -172,6 +178,9 @@ const SelectOption = ({
     onChange={(e) => onOptionChange(e.target.value as OptionType)}
   >
     <option>Select an option</option>
+    <option value={OptionType.CUSTOM_AMOUNT_TO_EXTRACT}>
+      {OptionType.CUSTOM_AMOUNT_TO_EXTRACT}
+    </option>
     <option value={OptionType.INFINITE_SCROLL}>
       {OptionType.INFINITE_SCROLL}
     </option>
