@@ -1,6 +1,6 @@
 {
   "name": "Tinking - Scrapping Tool",
-  "version": "0.0.0.3",
+  "version": "0.1.1",
   "manifest_version": 2,
   "description": "Extract data from any website without code, just clicks",
   "icons": {

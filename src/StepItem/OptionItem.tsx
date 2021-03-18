@@ -1,15 +1,35 @@
-import { CheckIcon, CloseIcon, DeleteIcon } from "@chakra-ui/icons";
 import {
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  CloseIcon,
+  DeleteIcon,
+} from "@chakra-ui/icons";
+import {
+  Button,
   Flex,
+  HStack,
   IconButton,
   Input,
   InputGroup,
   InputRightElement,
-  Select,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  Popover,
+  PopoverBody,
+  PopoverContent,
+  PopoverTrigger,
+  Text,
+  Tag,
 } from "@chakra-ui/react";
 import React, { ChangeEvent, useEffect, useState } from "react";
+import { BiHash } from "react-icons/bi";
+import { VscRegex } from "react-icons/vsc";
 import {
   launchNodeSelection,
+  parseInputPlaceholderFromOption,
   stopNodeSelection,
 } from "../service/helperFunctions";
 import {
@@ -17,6 +37,7 @@ import {
   OptionWithValue,
   SimpleOption,
   Step,
+  StepAction,
   StepOption,
 } from "../types";
 
@@ -44,6 +65,9 @@ export const OptionItem = ({
     false
   );
   const [regexValid, setRegexValid] = useState<boolean | undefined>();
+  const [inputPlaceholder, setInputPlaceholder] = useState(
+    parseInputPlaceholderFromOption(option?.type)
+  );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleIncomingMessageFromPage = (event: any) => {
@@ -67,20 +91,26 @@ export const OptionItem = ({
     };
   });
 
-  const handleOptionTypeChange = (option: OptionType) => {
+  const handleOptionTypeChange = (optionType: OptionType) => {
     let newOption: SimpleOption | OptionWithValue;
-    if (option === OptionType.PAGINATION || option === OptionType.REGEX) {
+    const optionNeedValue =
+      optionType === OptionType.PAGINATION ||
+      optionType === OptionType.REGEX ||
+      optionType === OptionType.CUSTOM_AMOUNT_TO_EXTRACT;
+
+    if (optionNeedValue) {
       newOption = {
-        type: option,
+        type: optionType,
         value: "",
       };
+      setInputPlaceholder(parseInputPlaceholderFromOption(optionType));
     } else {
       newOption = {
-        type: option,
+        type: optionType,
       };
     }
     onOptionChange(newOption);
-    if (option === OptionType.PAGINATION) {
+    if (optionType === OptionType.PAGINATION) {
       setIsSelectingPaginateElement(true);
       launchNodeSelection(stepIndex, "pagination", { optionIndex });
     }
@@ -119,31 +149,59 @@ export const OptionItem = ({
   return (
     <Flex alignItems="center" justifyContent="space-between">
       <SelectOption
-        option={option?.type}
+        stepAction={step.action}
+        optionType={option?.type}
         onOptionChange={(option) => handleOptionTypeChange(option)}
       />
       {option && "value" in option && (
-        <InputGroup size="sm">
-          <Input
-            ml={1}
-            placeholder={
-              option.type === OptionType.REGEX
-                ? "Regex with group to match"
-                : "Selector"
-            }
-            value={option.value}
-            onChange={(e) => handleOptionValueChange(e, option)}
-          />
-          {regexValid !== undefined && (
-            <InputRightElement>
-              {regexValid ? (
-                <CheckIcon color="teal.200" fontSize={"small"} />
-              ) : (
-                <CloseIcon color="red.200" fontSize={"x-small"} />
-              )}
-            </InputRightElement>
+        <>
+          {option.type === OptionType.REGEX ? (
+            <Popover placement="top" autoFocus={false}>
+              <PopoverTrigger>
+                <InputGroup size="sm" flex="1">
+                  <Input
+                    ml={1}
+                    placeholder={inputPlaceholder}
+                    value={option.value}
+                    onChange={(e) => handleOptionValueChange(e, option)}
+                  />
+                  {regexValid !== undefined && (
+                    <InputRightElement>
+                      {regexValid ? (
+                        <CheckIcon color="teal.200" fontSize={"small"} />
+                      ) : (
+                        <CloseIcon color="red.200" fontSize={"x-small"} />
+                      )}
+                    </InputRightElement>
+                  )}
+                </InputGroup>
+              </PopoverTrigger>
+              <PopoverContent border="none">
+                <PopoverBody>
+                  <Flex flexDir="column">
+                    <Text textDecor="underline">Examples:</Text>
+                    <HStack>
+                      <Text>50$ 👉 </Text> <Tag>(\d+)$</Tag> <Text>👉 50</Text>
+                    </HStack>
+                    <HStack>
+                      <Text>I like cookies 👉 </Text> <Tag>I (\w+) cookies</Tag>{" "}
+                      <Text>👉 like</Text>
+                    </HStack>
+                  </Flex>
+                </PopoverBody>
+              </PopoverContent>
+            </Popover>
+          ) : (
+            <InputGroup size="sm" flex="1">
+              <Input
+                ml={1}
+                placeholder={inputPlaceholder}
+                value={option.value}
+                onChange={(e) => handleOptionValueChange(e, option)}
+              />
+            </InputGroup>
           )}
-        </InputGroup>
+        </>
       )}
       <IconButton
         size="xs"
@@ -158,24 +216,50 @@ export const OptionItem = ({
 };
 
 const SelectOption = ({
-  option,
+  stepAction,
+  optionType,
   onOptionChange,
 }: {
-  option?: OptionType;
+  stepAction?: StepAction;
+  optionType?: OptionType;
   onOptionChange: (val: OptionType) => void;
 }) => (
-  <Select
-    size="sm"
-    display="inline-flex"
-    w="160px"
-    value={option}
-    onChange={(e) => onOptionChange(e.target.value as OptionType)}
-  >
-    <option>Select an option</option>
-    <option value={OptionType.INFINITE_SCROLL}>
-      {OptionType.INFINITE_SCROLL}
-    </option>
-    <option value={OptionType.PAGINATION}>{OptionType.PAGINATION}</option>
-    <option value={OptionType.REGEX}>{OptionType.REGEX}</option>
-  </Select>
+  <Menu defaultIsOpen={optionType === undefined}>
+    <MenuButton
+      size="sm"
+      as={Button}
+      rightIcon={<ChevronDownIcon />}
+      _focus={{ outline: "none" }}
+    >
+      {optionType ?? "Select an option"}
+    </MenuButton>
+    <MenuList bgColor="teal.700" border="none">
+      <MenuItem
+        onClick={() => onOptionChange(OptionType.CUSTOM_AMOUNT_TO_EXTRACT)}
+        icon={<BiHash />}
+      >
+        {OptionType.CUSTOM_AMOUNT_TO_EXTRACT}
+      </MenuItem>
+      <MenuItem
+        icon={<VscRegex />}
+        onClick={() => onOptionChange(OptionType.REGEX)}
+      >
+        {OptionType.REGEX}
+      </MenuItem>
+      {stepAction === StepAction.NAVIGATE && (
+        <MenuItem
+          icon={<ChevronRightIcon />}
+          onClick={() => onOptionChange(OptionType.PAGINATION)}
+        >
+          {OptionType.PAGINATION}
+        </MenuItem>
+      )}
+      <MenuItem
+        icon={<ChevronDownIcon />}
+        onClick={() => onOptionChange(OptionType.INFINITE_SCROLL)}
+      >
+        {OptionType.INFINITE_SCROLL}
+      </MenuItem>
+    </MenuList>
+  </Menu>
 );

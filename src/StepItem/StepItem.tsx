@@ -1,8 +1,12 @@
-import { DeleteIcon, CheckIcon, SmallAddIcon } from "@chakra-ui/icons";
+import {
+  DeleteIcon,
+  CheckIcon,
+  SmallAddIcon,
+  ChevronDownIcon,
+} from "@chakra-ui/icons";
 import {
   ListItem,
   Flex,
-  Select,
   Input,
   Box,
   Tag,
@@ -11,12 +15,19 @@ import {
   Text,
   Button,
   OrderedList,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
 } from "@chakra-ui/react";
 import { Draggable } from "react-beautiful-dnd";
 import { useAtom } from "jotai";
 import React, { ChangeEvent, useEffect, useRef } from "react";
 import { useState } from "react";
 import { MdEdit } from "react-icons/md";
+import { BsCardText, BsCardImage, BsLink } from "react-icons/bs";
+import { IoMdNavigate } from "react-icons/io";
+import { BiVideoRecording } from "react-icons/bi";
 import { editingStepAtom } from "../App";
 import {
   actionIsExpectingSelector,
@@ -484,22 +495,41 @@ const SelectAction = ({
   step: Step;
   onActionChange: (val: StepAction) => void;
 }) => (
-  <Select
-    size="sm"
-    display="inline-flex"
-    w="160px"
-    value={step.action}
-    onChange={(e) => onActionChange(e.target.value as StepAction)}
-  >
-    <option>Select an action</option>
-    <option value={StepAction.EXTRACT_TEXT}>{StepAction.EXTRACT_TEXT}</option>
-    <option value={StepAction.EXTRACT_IMAGE_SRC}>
-      {StepAction.EXTRACT_IMAGE_SRC}
-    </option>
-    <option value={StepAction.EXTRACT_HREF}>{StepAction.EXTRACT_HREF}</option>
-    <option value={StepAction.NAVIGATE}>{StepAction.NAVIGATE}</option>
-    <option value={StepAction.RECORD_CLICKS_KEYS}>
-      {StepAction.RECORD_CLICKS_KEYS}
-    </option>
-  </Select>
+  <Menu defaultIsOpen={step.action === undefined}>
+    <MenuButton size="sm" as={Button} rightIcon={<ChevronDownIcon />}>
+      {step.action ?? "Select an action"}
+    </MenuButton>
+    <MenuList bgColor="teal.800" border="none">
+      <MenuItem
+        onClick={() => onActionChange(StepAction.EXTRACT_TEXT)}
+        icon={<BsCardText />}
+      >
+        {StepAction.EXTRACT_TEXT}
+      </MenuItem>
+      <MenuItem
+        icon={<BsCardImage />}
+        onClick={() => onActionChange(StepAction.EXTRACT_IMAGE_SRC)}
+      >
+        {StepAction.EXTRACT_IMAGE_SRC}
+      </MenuItem>
+      <MenuItem
+        icon={<BsLink />}
+        onClick={() => onActionChange(StepAction.EXTRACT_HREF)}
+      >
+        {StepAction.EXTRACT_HREF}
+      </MenuItem>
+      <MenuItem
+        icon={<IoMdNavigate />}
+        onClick={() => onActionChange(StepAction.NAVIGATE)}
+      >
+        {StepAction.NAVIGATE}
+      </MenuItem>
+      <MenuItem
+        icon={<BiVideoRecording />}
+        onClick={() => onActionChange(StepAction.RECORD_CLICKS_KEYS)}
+      >
+        {StepAction.RECORD_CLICKS_KEYS}
+      </MenuItem>
+    </MenuList>
+  </Menu>
 );

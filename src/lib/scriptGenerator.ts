@@ -122,7 +122,7 @@ export const generateScript = (
   );`;
   }
 
-  const script = `
+  let script = `
   ${
     library === "puppeteer"
       ? `const puppeteer = require("puppeteer");`
@@ -151,10 +151,16 @@ export const generateScript = (
   })();
   ${parseUtilsFunctions(utils)}
   `;
-  return prettier.format(script, {
-    parser: "babel",
-    plugins: [babelParser],
-  });
+  try {
+    script = prettier.format(script, {
+      parser: "babel",
+      plugins: [babelParser],
+    });
+  } catch (e) {
+    console.error("Couldn't format script:", e);
+    console.log("Steps:", steps);
+  }
+  return script;
 };
 
 const parseSingleCommandFromStep = (
@@ -179,6 +185,9 @@ const parseSingleCommandFromStep = (
   const regexOption = step.options.find(
     (option) => option?.type === OptionType.REGEX
   ) as OptionWithValue;
+
+  const amountToExtract = getAmountToExtract(step);
+
   switch (step.action) {
     case StepAction.NAVIGATE: {
       command += `
@@ -191,17 +200,28 @@ const parseSingleCommandFromStep = (
       break;
     }
     case StepAction.EXTRACT_TEXT: {
-      if (step.totalSelected && step.totalSelected > 1) {
+      if (
+        step.totalSelected &&
+        step.totalSelected > 1 &&
+        amountToExtract !== "1"
+      ) {
         command += `
         const ${variableName} = await page.evaluate(() => {
           const elements = document.querySelectorAll("${step.selector}")
-          return [...elements].map(element => element.textContent || null);
+          return [...elements].map(element => element.textContent.replace(/(\\r\\n|\\n|\\r)/gm, "").trim() || null).slice(0,${amountToExtract});
         });`;
       } else {
-        command += `const ${variableName} = await page.evaluate(() => {
+        command += `
+        const ${variableName}Eval = () => {
           const element = document.querySelector("${step.selector}")
-          return element.textContent;
-        });
+          return element.textContent.replace(/(\\r\\n|\\n|\\r)/gm, "").trim();
+        }
+        let ${variableName} = await page.evaluate(${variableName}Eval);
+        if(${variableName} === null || ${variableName} === ""){
+          // The content could be dynamically loaded. Waiting a bit...
+          await page.waitForTimeout(4000)
+          ${variableName} = await page.evaluate(${variableName}Eval);
+        }
         let formatted${
           variableName.charAt(0).toUpperCase() + variableName.slice(1)
         } = ${variableName}
@@ -210,18 +230,28 @@ const parseSingleCommandFromStep = (
       break;
     }
     case StepAction.EXTRACT_IMAGE_SRC: {
-      if (step.totalSelected && step.totalSelected > 1) {
+      if (
+        step.totalSelected &&
+        step.totalSelected > 1 &&
+        amountToExtract !== "1"
+      ) {
         command += `
         const ${variableName} = await page.evaluate(() => {
           const elements = document.querySelectorAll("${step.selector}")
-          return [...elements].map(element => element.src || null);
+          return [...elements].map(element => element.src || null).slice(0,${amountToExtract});
         });`;
       } else {
         command += `
-        const ${variableName} = await page.evaluate(() => {
+        const ${variableName}Eval = () => {
           const element = document.querySelector("${step.selector}")
           return element.src || null;
-        });
+        }
+        let ${variableName} = await page.evaluate(${variableName}Eval);
+        if(${variableName} === null || ${variableName} === ""){
+          // The content could be dynamically loaded. Waiting a bit...
+          await page.waitForTimeout(4000)
+          ${variableName} = await page.evaluate(${variableName}Eval);
+        }
         let formatted${
           variableName.charAt(0).toUpperCase() + variableName.slice(1)
         } = ${variableName}
@@ -230,18 +260,28 @@ const parseSingleCommandFromStep = (
       break;
     }
     case StepAction.EXTRACT_HREF: {
-      if (step.totalSelected && step.totalSelected > 1) {
+      if (
+        step.totalSelected &&
+        step.totalSelected > 1 &&
+        amountToExtract !== "1"
+      ) {
         command += `
         const ${variableName} = await page.evaluate(() => {
           const elements = document.querySelectorAll("${step.selector}")
-          return [...elements].map(element => element.href || null);
+          return [...elements].map(element => element.href || null).slice(0,${amountToExtract});
         });`;
       } else {
         command += `
-        const ${variableName} = await page.evaluate(() => {
+        const ${variableName}Eval = () => {
           const element = document.querySelector("${step.selector}")
           return element.href || null;
-        });
+        }
+        let ${variableName} = await page.evaluate(${variableName}Eval);
+        if(${variableName} === null || ${variableName} === ""){
+          // The content could be dynamically loaded. Waiting a bit...
+          await page.waitForTimeout(4000)
+          ${variableName} = await page.evaluate(${variableName}Eval);
+        }
         let formatted${
           variableName.charAt(0).toUpperCase() + variableName.slice(1)
         } = ${variableName}
@@ -258,7 +298,10 @@ const parseSingleCommandFromStep = (
   if (regexOption) {
     command += `const regex = new RegExp("${regexOption.value}", "gm");
     const matchedArray = [...${variableName}.matchAll(regex)];
-    const match = matchedArray[0][1];
+    let match = ""
+    try{
+      match = matchedArray[0][1];
+    } catch(e) {}
     if (match !== "") {
       formatted${
         variableName.charAt(0).toUpperCase() + variableName.slice(1)
@@ -269,10 +312,28 @@ const parseSingleCommandFromStep = (
   return command;
 };
 
+const getAmountToExtract = (step: Step): string => {
+  const optionIndex = step.options.findIndex(
+    (option) => option?.type === OptionType.CUSTOM_AMOUNT_TO_EXTRACT
+  );
+  const stepHasCustomAmountToExtract = optionIndex !== -1;
+
+  if (stepHasCustomAmountToExtract) {
+    const option: OptionWithValue = step.options[
+      optionIndex
+    ] as OptionWithValue;
+    return option.value;
+  } else {
+    return "";
+  }
+};
+
 const parseLoopFromStep = (step: Step) => {
   const paginationOption = step.options?.find(
     (option) => option?.type === OptionType.PAGINATION
   ) as OptionWithValue | undefined;
+
+  const amountToExtract = getAmountToExtract(step);
 
   let urlsExtractionCommand;
   if (paginationOption) {
@@ -280,31 +341,64 @@ const parseLoopFromStep = (step: Step) => {
       await page.waitForSelector("${step.selector}")
       let urls = []
       urls = await page.evaluate(() => {
-        return [...document.querySelectorAll("${step.selector}")].map((node) => node.href);
+        return [...document.querySelectorAll("${
+          step.selector
+        }")].map((node) => node.href);
       });
-      let i = 0
-      // 1000 pages max
-      console.log("Extracting URLs");
-      const paginationBar = new ProgressBar(" scrapping [:bar] :rate/bps :percent :etas", {
-        complete: "=",
-        incomplete: " ",
-        width: 20,
-        total: 1000
-      });
-      while(i <= 1000){
-        paginationBar.tick()
-        i += 1
-        const nodes = await page.$$("${paginationOption?.value}");
-        await nodes.pop().click();
-        await page.waitForTimeout(4000);
-        try{
-          await page.waitForSelector("${step.selector}")
-        }catch{
-          break;
+      if(${
+        amountToExtract === "" ? "false" : `urls.length >= ${amountToExtract}`
+      }){
+        urls = urls.slice(0, ${amountToExtract})
+      } else {
+        let i = 0
+        console.log("Extracting URLs");
+        const paginationBar = new ProgressBar(" scrapping [:bar] :rate/bps :percent :etas", {
+          complete: "=",
+          incomplete: " ",
+          width: 20,
+          total: 1000
+        });
+        let firstLinkInCurrentPage = urls[0]
+        while(i <= 1000){
+          paginationBar.tick()
+          i += 1
+          const nodes = await page.$$("${paginationOption?.value}");
+          await nodes.pop().click();
+          await page.waitForTimeout(1000);
+          try{
+            await page.waitForSelector("${step.selector}")
+          }catch{
+            break;
+          }
+          let firstLinkInNewPage = await page.evaluate(() => {return document.querySelector("${
+            step.selector
+          }").href});
+          if (firstLinkInNewPage === firstLinkInCurrentPage) {
+            // There is some kind of loading state we need to wait for
+            await page.waitForTimeout(4000);
+            firstLinkInNewPage = await page.evaluate(() => {return document.querySelector("${
+              step.selector
+            }").href});
+            if (firstLinkInNewPage === firstLinkInCurrentPage) {
+              break;
+            }
+          }
+          const newUrls = await page.evaluate(() => {
+            return [...document.querySelectorAll("${
+              step.selector
+            }")].map(node => node.href);
+          })
+          urls = urls.concat(newUrls)
+          if (${
+            amountToExtract === ""
+              ? "false"
+              : `urls.length >= ${amountToExtract}`
+          }) {
+            urls = urls.slice(0, ${amountToExtract})
+            break;
+          }
+          firstLinkInCurrentPage = newUrls[0]
         }
-        urls = urls.concat(await page.evaluate(() => {
-          return [...document.querySelectorAll("${step.selector}")].map(node => node.href);
-        }))
       }
     `;
   } else {
@@ -382,6 +476,7 @@ const parseLibrarySettings = (library: "puppeteer" | "playwright") => {
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
+        "--window-size=1300,1024"
       ],
     });`;
   }
