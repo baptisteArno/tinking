@@ -28,6 +28,8 @@ import { StepItem } from "./StepItem/StepItem";
 import {
   launchNodeSelection,
   stopNodeSelection,
+  fetchGraphQL,
+  tinkToSteps,
 } from "./service/helperFunctions";
 import { atom, useAtom } from "jotai";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
@@ -95,8 +97,10 @@ export const App = (): JSX.Element => {
     }
   }, [editingStepIndex]);
 
-  const handleCloseClick = () => {
+  const handleCloseClick = async () => {
     parent.postMessage({ type: "WINDOW" }, "*");
+
+    // scrollToBottom();
   };
 
   const handleResetClick = () => {
