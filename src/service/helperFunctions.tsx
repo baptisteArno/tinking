@@ -10,16 +10,18 @@ import {
 } from "../types";
 import { v4 as uuidv4 } from "uuid";
 
-export const submitFeedback = (description: string, steps: Step[]) => {
+export const submitFeedback = async (description: string, steps: Step[]) => {
   const MAKE_FEEDBACK = `mutation MyMutation($description: String = "", $steps: [A_Step] = {}) {
     submitFeedback(feedback: {description: $description, steps: $steps}) {
       id
     }
   }`;
-  fetchGraphQL(MAKE_FEEDBACK, {
+  const madeFeedback = await fetchGraphQL(MAKE_FEEDBACK, {
     description,
     steps,
   });
+
+  return madeFeedback.data.submitFeedback.id
 }
 
 export const loadTink = async (tinkID: string) => {

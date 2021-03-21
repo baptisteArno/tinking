@@ -3,6 +3,7 @@ import {
   CloseIcon,
   QuestionIcon,
   SmallAddIcon,
+  WarningTwoIcon,
 } from "@chakra-ui/icons";
 import {
   Button,
@@ -25,6 +26,7 @@ import { Step, StepAction, TagType } from "./types";
 import { generateScript } from "./lib/scriptGenerator";
 import { v4 as uuidv4 } from "uuid";
 import { StepItem } from "./StepItem/StepItem";
+import { FeedbackForm } from "./FeedbackForm"
 import {
   launchNodeSelection,
   stopNodeSelection,
@@ -39,6 +41,7 @@ export const editingStepAtom = atom<number | null>(null);
 
 export const App = (): JSX.Element => {
   const [script, setScript] = useState("");
+  const [showIssueForm, setShowIssueForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [steps, setSteps] = useState<Step[]>([
     {
@@ -170,6 +173,10 @@ export const App = (): JSX.Element => {
 
   const lastStepHasNoAction =
     steps.length > 1 && steps[steps.length - 1].action === undefined;
+
+  const onFeedbackSubmit = () => {
+    setShowIssueForm(false)
+  }
 
   return (
     <ChakraProvider>
@@ -333,6 +340,19 @@ export const App = (): JSX.Element => {
                       How to use this code?
                     </Link>
                   </>
+                )}
+                <Button
+                  width="130px"
+                  colorScheme="pink"
+                  onClick={() => setShowIssueForm(!showIssueForm)}
+                  leftIcon={<WarningTwoIcon />}
+                  size="sm"
+                  mt={4}
+                >
+                  Report issue
+                </Button>
+                {showIssueForm && (
+                  <FeedbackForm steps={steps} callback={onFeedbackSubmit} />
                 )}
               </>
             )}
