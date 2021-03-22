@@ -1,58 +1,88 @@
 import { useForm } from "react-hook-form";
 import React from "react";
+import { ExternalLinkIcon, CheckCircleIcon } from "@chakra-ui/icons";
 import {
   Flex,
-  FormErrorMessage,
-  FormLabel,
   FormControl,
   Textarea,
   Button,
   Checkbox,
   useToast,
+  Box,
+  Link,
+  Heading,
+  Text,
 } from "@chakra-ui/react";
-import { WarningTwoIcon } from "@chakra-ui/icons";
 import { Step } from "./types";
-import { submitFeedback } from "./service/helperFunctions"
+import { submitFeedback, makeGithubIssue } from "./service/helperFunctions";
 
 type FeedbackProps = {
   steps: Step[];
-  callback: Function;
+  callback: any;
 };
 
 type FormValues = {
   description: string;
-  relatedTink: Boolean;
-}
+  relateTink: boolean;
+};
 
 export const FeedbackForm = ({ steps, callback }: FeedbackProps) => {
   const { handleSubmit, errors, register, formState } = useForm();
-  const toast = useToast()
+  const toast = useToast();
 
   const onSubmit = async (values: FormValues) => {
-    const feedbackID = await submitFeedback(values.description, steps)
+    const tinkID = await submitFeedback(
+      values.description,
+      values.relateTink,
+      steps
+    );
+
+    if (tinkID === false) {
+      toast({
+        title: "Failed",
+        description:
+          "Please try reopening Tinking and try again. Otherwise save the tink and load it.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    const issueURL = await makeGithubIssue(values.description, tinkID);
+
+    const toastImmitation = () => (
+      <Box p={3} bg="#9ae6b4" borderRadius="10px">
+        <Flex>
+          <CheckCircleIcon w={5} h={5} mx={2} />
+          <Flex direction="column">
+            <Heading size="sm"> Report submitted</Heading>
+            <Text>Track your report here: </Text>
+            <Link fontWeight="bold" href={issueURL} isExternal>
+              GitHub <ExternalLinkIcon mx="2px" />
+            </Link>
+          </Flex>
+        </Flex>
+      </Box>
+    );
+
     toast({
-      title: "Report submitted.",
-      position: "top",
-      description: `Track your report here: ${feedbackID}.`,
+      render: toastImmitation,
+      duration: 20000,
       status: "success",
       isClosable: true,
-    })
-    callback()
-    return
-  }
+    });
+    callback();
+    return;
+  };
 
   return (
     <Flex>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <FormControl
-          isInvalid={errors.name}
-        >
-          <Checkbox
-            name="relateTink"
-            ref={register}
-            defaultIsChecked
-            mt={2}
-          >Related to current scrape</Checkbox>
+        <FormControl isInvalid={errors.name}>
+          <Checkbox name="relateTink" ref={register} defaultIsChecked mt={2}>
+            Related to current Tink
+          </Checkbox>
           <Textarea
             name="description"
             placeholder="describe the issue"
@@ -75,4 +105,4 @@ export const FeedbackForm = ({ steps, callback }: FeedbackProps) => {
       </form>
     </Flex>
   );
-}
+};

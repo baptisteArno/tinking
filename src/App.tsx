@@ -7,6 +7,7 @@ import {
 } from "@chakra-ui/icons";
 import {
   Button,
+  Text,
   ChakraProvider,
   Code,
   DarkMode,
@@ -26,12 +27,12 @@ import { Step, StepAction, TagType } from "./types";
 import { generateScript } from "./lib/scriptGenerator";
 import { v4 as uuidv4 } from "uuid";
 import { StepItem } from "./StepItem/StepItem";
-import { FeedbackForm } from "./FeedbackForm"
+import { FeedbackForm } from "./FeedbackForm";
+import { TinkLoader } from "./TinkLoader";
+import { TinkSave } from "./TinkSave";
 import {
   launchNodeSelection,
   stopNodeSelection,
-  fetchGraphQL,
-  tinkToSteps,
 } from "./service/helperFunctions";
 import { atom, useAtom } from "jotai";
 import { DragDropContext, Droppable, DropResult } from "react-beautiful-dnd";
@@ -102,8 +103,6 @@ export const App = (): JSX.Element => {
 
   const handleCloseClick = async () => {
     parent.postMessage({ type: "WINDOW" }, "*");
-
-    // scrollToBottom();
   };
 
   const handleResetClick = () => {
@@ -174,9 +173,16 @@ export const App = (): JSX.Element => {
   const lastStepHasNoAction =
     steps.length > 1 && steps[steps.length - 1].action === undefined;
 
+  const onTinkLoaded = (steps: Step[]) => {
+    setSteps(steps);
+    setTimeout(() => {
+      scrollToBottom();
+    }, 10);
+  };
+
   const onFeedbackSubmit = () => {
-    setShowIssueForm(false)
-  }
+    setShowIssueForm(false);
+  };
 
   return (
     <ChakraProvider>
@@ -235,13 +241,16 @@ export const App = (): JSX.Element => {
               />
             </Flex>
           </Flex>
+          <Flex mt="70px" px="10px">
+            <TinkLoader callback={onTinkLoaded} />
+          </Flex>
 
           <Flex
             ref={scrollingContainer}
             style={{ scrollBehavior: "smooth" }}
             overflowY="scroll"
             h="630px"
-            mt="70px"
+            mt={4}
             direction="column"
             px="10px"
           >
@@ -249,6 +258,10 @@ export const App = (): JSX.Element => {
               <Spinner m="auto" />
             ) : (
               <>
+                <Flex mb={2} alignItems="bottom">
+                  <Text>🧶 Tink</Text>
+                  <TinkSave steps={steps} />
+                </Flex>
                 <InitialStep step={steps[0]} />
                 <DragDropContext onDragEnd={handleDragEnd}>
                   <Droppable droppableId="stepsList">
@@ -342,10 +355,11 @@ export const App = (): JSX.Element => {
                   </>
                 )}
                 <Button
-                  width="130px"
+                  width="140px"
                   colorScheme="pink"
                   onClick={() => setShowIssueForm(!showIssueForm)}
                   leftIcon={<WarningTwoIcon />}
+                  rightIcon={<ChevronDownIcon />}
                   size="sm"
                   mt={4}
                 >

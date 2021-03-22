@@ -1,4 +1,5 @@
 /node_modules
 /build
+/src/env.tsx
 
 .DS_Store

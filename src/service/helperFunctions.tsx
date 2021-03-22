@@ -8,21 +8,85 @@ import {
   MouseClick,
   KeyInput,
 } from "../types";
+import { ADMIN_SECRET, GITHUB_TOKEN } from "../env";
 import { v4 as uuidv4 } from "uuid";
 
-export const submitFeedback = async (description: string, steps: Step[]) => {
-  const MAKE_FEEDBACK = `mutation MyMutation($description: String = "", $steps: [A_Step] = {}) {
-    submitFeedback(feedback: {description: $description, steps: $steps}) {
+export const makeGithubIssue = async (
+  description: string,
+  tinkID: string | undefined
+) => {
+  const postedIssue = await fetch(
+    "https://api.github.com/repos/baptisteArno/tinking/issues",
+    {
+      method: "post",
+      body: JSON.stringify({
+        title: "(Automated Issue) " + description.slice(0, 20) + "...",
+        body: `${
+          tinkID ? `Tink ID: "${tinkID}"` : "No Tink ID"
+        }\nDescription: ${description}`,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `token ${GITHUB_TOKEN}`,
+      },
+    }
+  ).then((res) => res.json());
+
+  return postedIssue.html_url;
+};
+
+export const saveTink = async (steps: Step[]) => {
+  const MAKE_TINK = `mutation MyMutation($steps: [A_Step] = {}) {
+    makeTink(steps: $steps) {
       id
     }
   }`;
-  const madeFeedback = await fetchGraphQL(MAKE_FEEDBACK, {
-    description,
+
+  const madeTink = await fetchGraphQL(MAKE_TINK, {
     steps,
   });
 
-  return madeFeedback.data.submitFeedback.id
-}
+  return madeTink.data.makeTink.id;
+};
+
+export const submitFeedback = async (
+  description: string,
+  makeTink: boolean,
+  steps: Step[]
+) => {
+  const MAKE_FEEDBACK = `mutation MyMutation($description: String = ""${
+    makeTink ? ", $steps: [A_Step] = {}" : ""
+  }) {
+    submitFeedback(feedback: {description: $description${
+      makeTink ? ", steps: $steps" : ""
+    }}) {
+      Feedback {
+        id
+        Tink {
+          id
+        }
+      }
+    }
+  }`;
+  let variables;
+  if (makeTink) {
+    variables = {
+      description,
+      steps,
+    };
+  } else {
+    variables = {
+      description,
+    };
+  }
+  const madeFeedback = await fetchGraphQL(MAKE_FEEDBACK, variables);
+  console.log(madeFeedback);
+  if (!madeFeedback.data) {
+    return false;
+  }
+  const tinkData = madeFeedback.data.submitFeedback.Feedback.Tink;
+  return tinkData ? tinkData.id : null;
+};
 
 export const loadTink = async (tinkID: string) => {
   const GET_TINK = `query MyQuery {
@@ -50,13 +114,12 @@ export const loadTink = async (tinkID: string) => {
     }
   }`;
   const findTink = await fetchGraphQL(GET_TINK);
-  if (findTink.data.Tink[0]) {
-    console.log(tinkToSteps(findTink.data.Tink[0]));
-    // setSteps([...tinkToSteps(findTink.data.Tink[0])]);
+  if (findTink.data && findTink.data.Tink[0]) {
+    return tinkToSteps(findTink.data.Tink[0]);
   } else {
-    console.log("Sorry, no Tink found.");
+    return false;
   }
-}
+};
 
 export const tinkToSteps = (tink: any): Step[] => {
   const parsed = [];
@@ -120,8 +183,7 @@ export const fetchGraphQL = async (schema: string, variables = {}) => {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      "x-hasura-admin-secret":
-        "aRjtmnouR7ue0kvluCyqk5h1SHlyc65lfeK2DcdiRFIRcXx43tvTmjb5EUhB5jIT",
+      "x-hasura-admin-secret": ADMIN_SECRET,
     },
     body: graphql,
   };
