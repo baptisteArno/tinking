@@ -444,8 +444,8 @@ const onClick = (
         break;
       }
       default: {
-        content = selectedNodes[0].textContent
-          .replace(/(\r\n|\n|\r)/gm, "")
+        content = selectedNodes[0].innerText
+          .replace(/(\r\n|\n|\r)/gm, " ")
           .trim();
       }
     }
@@ -484,7 +484,7 @@ const onClick = (
         e.preventDefault();
         e.stopImmediatePropagation();
         tippyOnlyThisButton.destroy();
-        let content = clicked.textContent.replace(/(\r\n|\n|\r)/gm, "").trim();
+        let content = clicked.innerText.replace(/(\r\n|\n|\r)/gm, " ").trim();
         switch (type) {
           case "a": {
             content = clicked.href;

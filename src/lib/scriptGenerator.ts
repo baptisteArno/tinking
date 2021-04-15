@@ -139,7 +139,8 @@ export const generateScript = (
     try {
       const outputFilename = "${window.location.host}.json";
       const page = await browser.newPage();
-      await page.setDefaultNavigationTimeout(0); 
+      await page.setDefaultNavigationTimeout(0);
+      await page.setDefaultTimeout(10000);
       await page.goto("${steps[0].content}");
       ${utils.infiniteScroll ? `await autoScroll(page)` : ``}
       ${commands}
@@ -193,7 +194,7 @@ const parseSingleCommandFromStep = (
       command += `
       let url = await page.evaluate(() => {
         const element = document.querySelector("${step.selector}")
-        return element.href || null;
+        return element?.href || null;
       });
       await page.goto(url)
       `;
@@ -208,13 +209,13 @@ const parseSingleCommandFromStep = (
         command += `
         const ${variableName} = await page.evaluate(() => {
           const elements = document.querySelectorAll("${step.selector}")
-          return [...elements].map(element => element.textContent.replace(/(\\r\\n|\\n|\\r)/gm, "").trim() || null).slice(0,${amountToExtract});
+          return [...elements].map(element => element?.innerText.replace(/(\\r\\n|\\n|\\r)/gm, " ").trim() || null).slice(0,${amountToExtract});
         });`;
       } else {
         command += `
         const ${variableName}Eval = () => {
           const element = document.querySelector("${step.selector}")
-          return element.textContent.replace(/(\\r\\n|\\n|\\r)/gm, "").trim();
+          return element?.innerText.replace(/(\\r\\n|\\n|\\r)/gm, " ").trim() || null;
         }
         let ${variableName} = await page.evaluate(${variableName}Eval);
         if(${variableName} === null || ${variableName} === ""){
@@ -222,11 +223,11 @@ const parseSingleCommandFromStep = (
           await page.waitForTimeout(4000)
           ${variableName} = await page.evaluate(${variableName}Eval);
         }
-        let formatted${
-          variableName.charAt(0).toUpperCase() + variableName.slice(1)
-        } = ${variableName}
         `;
       }
+      command += `let formatted${
+        variableName.charAt(0).toUpperCase() + variableName.slice(1)
+      } = ${variableName};`;
       break;
     }
     case StepAction.EXTRACT_IMAGE_SRC: {
@@ -238,13 +239,13 @@ const parseSingleCommandFromStep = (
         command += `
         const ${variableName} = await page.evaluate(() => {
           const elements = document.querySelectorAll("${step.selector}")
-          return [...elements].map(element => element.src || null).slice(0,${amountToExtract});
+          return [...elements].map(element => element?.src || null).slice(0,${amountToExtract});
         });`;
       } else {
         command += `
         const ${variableName}Eval = () => {
           const element = document.querySelector("${step.selector}")
-          return element.src || null;
+          return element?.src || null;
         }
         let ${variableName} = await page.evaluate(${variableName}Eval);
         if(${variableName} === null || ${variableName} === ""){
@@ -252,11 +253,11 @@ const parseSingleCommandFromStep = (
           await page.waitForTimeout(4000)
           ${variableName} = await page.evaluate(${variableName}Eval);
         }
-        let formatted${
-          variableName.charAt(0).toUpperCase() + variableName.slice(1)
-        } = ${variableName}
         `;
       }
+      command += `let formatted${
+        variableName.charAt(0).toUpperCase() + variableName.slice(1)
+      } = ${variableName};`;
       break;
     }
     case StepAction.EXTRACT_HREF: {
@@ -268,13 +269,13 @@ const parseSingleCommandFromStep = (
         command += `
         const ${variableName} = await page.evaluate(() => {
           const elements = document.querySelectorAll("${step.selector}")
-          return [...elements].map(element => element.href || null).slice(0,${amountToExtract});
+          return [...elements].map(element => element?.href || null).slice(0,${amountToExtract});
         });`;
       } else {
         command += `
         const ${variableName}Eval = () => {
           const element = document.querySelector("${step.selector}")
-          return element.href || null;
+          return element?.href || null;
         }
         let ${variableName} = await page.evaluate(${variableName}Eval);
         if(${variableName} === null || ${variableName} === ""){
@@ -282,11 +283,11 @@ const parseSingleCommandFromStep = (
           await page.waitForTimeout(4000)
           ${variableName} = await page.evaluate(${variableName}Eval);
         }
-        let formatted${
-          variableName.charAt(0).toUpperCase() + variableName.slice(1)
-        } = ${variableName}
         `;
       }
+      command += `let formatted${
+        variableName.charAt(0).toUpperCase() + variableName.slice(1)
+      } = ${variableName};`;
       break;
     }
     case StepAction.RECORD_CLICKS_KEYS: {
@@ -296,16 +297,23 @@ const parseSingleCommandFromStep = (
     }
   }
   if (regexOption) {
-    command += `const regex = new RegExp("${regexOption.value}", "gm");
-    const matchedArray = [...${variableName}.matchAll(regex)];
-    let match = ""
-    try{
-      match = matchedArray[0][1];
-    } catch(e) {}
-    if (match !== "") {
-      formatted${
-        variableName.charAt(0).toUpperCase() + variableName.slice(1)
-      } = match
+    const formattedVarLabel = `formatted${
+      variableName.charAt(0).toUpperCase() + variableName.slice(1)
+    }`;
+    command += `
+    if(${formattedVarLabel}) {
+      const ${variableName}Regex = new RegExp(/${regexOption.value.replace(
+      "/",
+      `\/`
+    )}/, "gm");
+      const ${variableName}MatchedArray = [...${variableName}.matchAll(${variableName}Regex)];
+      let ${variableName}Match = ""
+      try{
+        ${variableName}Match = ${variableName}MatchedArray[0][1];
+      } catch(e) {}
+      if (${variableName}Match !== "") {
+        ${formattedVarLabel} = ${variableName}Match
+      }
     }
     `;
   }
@@ -335,10 +343,9 @@ const parseLoopFromStep = (step: Step) => {
 
   const amountToExtract = getAmountToExtract(step);
 
-  let urlsExtractionCommand;
+  let urlsExtractionCommand = `await page.waitForSelector("${step.selector}");`;
   if (paginationOption) {
-    urlsExtractionCommand = `
-      await page.waitForSelector("${step.selector}")
+    urlsExtractionCommand += `
       let urls = []
       urls = await page.evaluate(() => {
         return [...document.querySelectorAll("${
@@ -402,9 +409,10 @@ const parseLoopFromStep = (step: Step) => {
       }
     `;
   } else {
-    urlsExtractionCommand = `let urls = await page.evaluate(() => {
+    urlsExtractionCommand += `let urls = await page.evaluate(() => {
       return [...document.querySelectorAll("${step.selector}")].map(node => node.href);
-    });`;
+    });
+    urls = [...new Set(urls)]`;
   }
 
   switch (step.action) {
