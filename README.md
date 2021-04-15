@@ -16,7 +16,29 @@ _This tool is under active development. The code could use some cleanup, and the
 
 # Getting Started
 
-Tinking is not yet available on the Chrome Web Store. Follow these steps to run the extension locally:
+[Download from the Chrome Web Store.](https://chrome.google.com/webstore/detail/tinking-scrapping-tool/ibidcmokfddpkgdoobeihkfnajmodlkp?hl=fr&authuser=0)
+
+👉 [How to use the generated code?](https://github.com/baptisteArno/tinking-code-starter)
+
+# Couldn't scrape a particular website?
+
+While Tinking aims to be a universal tool, it's still a work in progress, and you may run into issues scraping certain websites.
+
+Please [submit an issue](https://github.com/baptisteArno/tinking/issues/new/choose), and we'll look into a potential fix.
+
+# Contribute
+
+## To-Do
+- [x] Infinite scroll
+- [x] Pagination
+- [x] Documentation on how to use the generated code
+- [x] Multiple export options (playwright, others?)
+- [x] Regex to filter data from scraped text
+- [x] Drag-and-drop steps
+- [ ] Test for different popular sites: Amazon, LinkedIn, Twitter...
+- [ ] [DOC] Write examples of several popular sites
+- [ ] Unit tests
+- [ ] Cool logo
 
 ## 1. Clone the repository
 
@@ -57,25 +79,3 @@ chrome://extensions/
 Make sure `Developer Mode` is turned on, and click the `Load unpacked` button. Select the `build` folder of the project.
 
 You should now see Tinking listed among any other extensions that you have installed, and you can begin using it to scrape websites.
-
-👉 [How to use the generated code?](https://github.com/baptisteArno/tinking-code-starter)
-
-# To-Do
-
-- [x] Basic scraping
-- [x] Infinite scroll
-- [x] Pagination
-- [x] Documentation on how to use the generated code
-- [x] Multiple export options (playwright, others?)
-- [x] Regex to filter data from scraped text
-- [x] Drag-and-drop steps
-- [ ] [DOC] Write examples of several popular sites
-- [ ] Unit tests
-- [ ] Cool logo
-- [ ] Ship extension to Chrome Web store (Waiting for Google review)
-
-# Couldn't scrape a particular website?
-
-While Tinking aims to be a universal tool, it's still a work in progress, and you may run into issues scraping certain websites.
-
-Please [submit an issue](https://github.com/baptisteArno/tinking/issues/new/choose), and we'll look into a potential fix.
